@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bench Boost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDF3F8; --card:#FFFFFF; --ink:#1B2A4A; --muted:#566781; --line:#D5DFEA; --soft:#E4F3FB;
+    --bar:#1B2A4A; --blue:#1CA7EC; --teal:#128B93; --orange:#FF6B35; --yellow:#FFC107; --green:#2F9E55; --red:#D9434A; --purple:#7D57C9;
+    --goodbg:#E2F5E8; --goodink:#1C6134; --badbg:#FDE8E8; --badink:#8F2328;
+    --head:'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+    --body:'Atkinson Hyperlegible', Verdana, system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1828; --card:#172338; --ink:#EAF1FA; --muted:#A3B3CB; --line:#2A3B58; --soft:#1B3048;
+      --bar:#0A1220; --goodbg:#163A25; --goodink:#A8E6BD; --badbg:#3E1C20; --badink:#F4B4B7;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1828; --card:#172338; --ink:#EAF1FA; --muted:#A3B3CB; --line:#2A3B58; --soft:#1B3048;
+    --bar:#0A1220; --goodbg:#163A25; --goodink:#A8E6BD; --badbg:#3E1C20; --badink:#F4B4B7;
+  }
+  :root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+  html{ scroll-padding-top:env(safe-area-inset-top,0px); }
+  *,*::before,*::after{ box-sizing:inherit; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--body); font-size:18px; line-height:1.45; -webkit-font-smoothing:antialiased; }
+  button{ font-family:inherit; color:inherit; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible{ outline:3px solid var(--blue); outline-offset:3px; }
+  img{ max-width:100%; }
+
+  /* top bar */
+  .top{ position:sticky; top:0; z-index:5; background:var(--bar); color:#fff; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 18px; padding-top:calc(10px + env(safe-area-inset-top,0px)); margin-top:calc(-1 * env(safe-area-inset-top,0px)); }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:var(--head); font-weight:800; font-size:24px; letter-spacing:.2px; }
+  .spotlogo{ width:36px; height:36px; border-radius:50%; background:var(--orange); box-shadow:12px 0 0 -4px var(--yellow), 22px 0 0 -8px var(--blue); margin-right:14px; }
+  .toptag{ font-size:15px; opacity:.85; }
+  .iconbtn{ background:rgba(255,255,255,.12); color:#fff; border:0; border-radius:12px; min-width:48px; height:48px; font-size:21px; cursor:pointer; }
+  .iconbtn:hover{ background:rgba(255,255,255,.2); }
+
+  .wrap{ max-width:960px; margin:0 auto; padding:22px 18px 48px; }
+  h1{ font-family:var(--head); font-weight:800; font-size:34px; line-height:1.1; margin:4px 0 6px; }
+  h2{ font-family:var(--head); font-weight:800; font-size:24px; margin:0 0 10px; }
+  .sub{ color:var(--muted); margin:0 0 18px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:22px; padding:20px; margin-bottom:16px; }
+  .hint{ color:var(--muted); font-size:15px; margin:8px 0 0; }
+  .err{ color:var(--red); font-weight:700; font-size:15px; margin:8px 0 0; }
+
+  /* chips & tiles */
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; }
+  .chip{ border:2px solid var(--line); background:var(--card); border-radius:999px; padding:10px 18px; font-weight:700; font-size:17px; cursor:pointer; min-height:48px; }
+  .chip.on{ background:var(--ink); border-color:var(--ink); color:var(--card); }
+  .group{ font-family:var(--head); font-weight:800; font-size:19px; margin:14px 0 8px; }
+  .units{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+  .unit{ display:flex; align-items:center; gap:12px; text-align:left; border:2px solid var(--line); background:var(--card); border-radius:16px; padding:12px 14px; font-weight:700; font-size:16px; cursor:pointer; min-height:64px; }
+  .unit .ic{ font-size:26px; width:34px; text-align:center; flex-shrink:0; }
+  .unit .sol{ display:block; font-weight:400; font-size:13px; color:var(--muted); margin-top:2px; }
+  .unit.on{ border-color:var(--teal); background:var(--soft); box-shadow:inset 0 0 0 1px var(--teal); }
+
+  .btn{ border:0; border-radius:16px; padding:15px 22px; font-weight:700; font-size:19px; cursor:pointer; min-height:58px; }
+  .btn.go{ background:var(--green); color:#fff; }
+  .btn.blue{ background:var(--blue); color:#fff; }
+  .btn.plain{ background:var(--card); border:2px solid var(--line); }
+  .btn.warn{ background:var(--red); color:#fff; }
+  .row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .row .btn{ flex:1; min-width:190px; }
+  input.text, textarea{ width:100%; font:inherit; font-size:19px; padding:14px 16px; border-radius:14px; border:2px solid var(--line); background:var(--card); color:var(--ink); }
+  textarea{ min-height:150px; resize:vertical; }
+  .pinset{ max-width:170px; letter-spacing:6px; font-weight:700; }
+
+  /* student home */
+  .court{ position:relative; overflow:hidden; background:var(--bar); color:#fff; border-radius:26px; padding:26px 24px 30px; margin-bottom:18px; }
+  .court::before{ content:""; position:absolute; right:-70px; top:50%; width:240px; height:240px; transform:translateY(-50%); border:4px solid rgba(255,255,255,.14); border-radius:50%; }
+  .court::after{ content:""; position:absolute; right:48px; top:0; bottom:0; width:4px; background:rgba(255,255,255,.14); }
+  .court .uic{ font-size:44px; line-height:1; }
+  .court h1{ margin-top:8px; }
+  .court .band{ opacity:.85; font-size:17px; }
+  .court .best{ margin-top:12px; display:inline-block; background:rgba(255,255,255,.12); border-radius:999px; padding:6px 14px; font-size:16px; }
+  .modes{ display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:16px; }
+  .mode{ border:0; border-radius:26px; padding:26px 22px; text-align:left; color:#fff; cursor:pointer; min-height:200px; display:flex; flex-direction:column; justify-content:flex-end; gap:6px; position:relative; overflow:hidden; }
+  .mode .big{ font-size:52px; line-height:1; margin-bottom:auto; }
+  .mode .t{ font-family:var(--head); font-size:30px; font-weight:800; line-height:1.05; }
+  .mode .d{ font-size:17px; opacity:.95; }
+  .mode.quiz{ background:var(--blue); }
+  .mode.rep{ background:var(--orange); }
+  .mode:hover{ filter:brightness(1.05); }
+
+  /* quiz */
+  .qbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; font-weight:700; font-size:18px; }
+  .streak{ color:var(--orange); }
+  .track{ display:flex; gap:6px; margin-bottom:18px; }
+  .track i{ flex:1; height:12px; border-radius:99px; background:var(--line); }
+  .track i.ok{ background:var(--green); } .track i.no{ background:var(--red); } .track i.now{ background:var(--blue); }
+  .qcard{ padding:24px; }
+  .qhead{ display:flex; gap:14px; align-items:flex-start; justify-content:space-between; }
+  .qtag{ display:inline-block; background:var(--soft); color:var(--teal); font-weight:700; font-size:15px; border-radius:99px; padding:4px 12px; margin-bottom:10px; }
+  .qtext{ font-family:var(--head); font-size:30px; font-weight:700; line-height:1.2; margin:0; }
+  .speak{ flex-shrink:0; width:56px; height:56px; border-radius:16px; border:2px solid var(--line); background:var(--card); font-size:25px; cursor:pointer; }
+  .answers{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
+  @media (max-width:640px){ .answers{ grid-template-columns:1fr; } }
+  .ans{ border:0; border-radius:20px; padding:16px 18px 16px 14px; min-height:88px; font-weight:700; font-size:21px; line-height:1.25; color:#fff; cursor:pointer; text-align:left; display:flex; align-items:center; gap:14px; }
+  .ans .spot{ width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.28); border:3px solid rgba(255,255,255,.6); display:grid; place-items:center; flex-shrink:0; font-family:var(--head); font-size:20px; }
+  .a0{ background:#1B8FD2; } .a1{ background:#E3602D; } .a2{ background:var(--teal); } .a3{ background:var(--purple); }
+  .ans.dim{ opacity:.32; }
+  .ans.right{ background:var(--green); opacity:1; }
+  .ans.wrong{ background:var(--red); opacity:1; }
+  .ans:disabled{ cursor:default; }
+  .feedback{ margin-top:16px; border-radius:18px; padding:16px 20px; font-size:19px; }
+  .feedback.good{ background:var(--goodbg); color:var(--goodink); }
+  .feedback.bad{ background:var(--badbg); color:var(--badink); }
+  .feedback strong{ display:block; font-family:var(--head); font-size:24px; margin-bottom:2px; }
+  .nextrow{ margin-top:14px; }
+  .band-k2 .qtext{ font-size:36px; }
+  .band-k2 .ans{ font-size:27px; min-height:100px; }
+
+  /* results */
+  .stars{ font-size:66px; letter-spacing:8px; text-align:center; margin:6px 0; }
+  .stars span{ display:inline-block; animation:pop .5s both; }
+  .stars span:nth-child(2){ animation-delay:.18s; } .stars span:nth-child(3){ animation-delay:.36s; }
+  .stars .off{ filter:grayscale(1); opacity:.28; }
+  @keyframes pop{ 0%{ transform:scale(0); } 70%{ transform:scale(1.25); } 100%{ transform:scale(1); } }
+  .center{ text-align:center; }
+  .scoreline{ font-family:var(--head); font-size:28px; font-weight:800; }
+  .newbest{ display:inline-block; background:var(--yellow); color:#3b2a00; font-weight:700; border-radius:99px; padding:4px 14px; margin-top:8px; }
+
+  /* pin */
+  .dots{ display:flex; justify-content:center; gap:16px; margin:14px 0 4px; }
+  .dots i{ width:20px; height:20px; border-radius:50%; border:3px solid var(--ink); display:block; }
+  .dots i.f{ background:var(--ink); }
+  .pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:330px; margin:18px auto 0; }
+  .pad button{ height:74px; font-size:30px; font-weight:700; border-radius:20px; border:2px solid var(--line); background:var(--card); cursor:pointer; }
+  .shake{ animation:shake .4s; }
+  @keyframes shake{ 20%,60%{ transform:translateX(-10px); } 40%,80%{ transform:translateX(10px); } }
+
+  /* reporter */
+  .choices{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-top:18px; }
+  .emo{ border:2px solid var(--line); background:var(--card); border-radius:20px; padding:18px 14px; font-size:24px; font-weight:700; cursor:pointer; min-height:96px; }
+  .emo:hover{ border-color:var(--orange); }
+  .stepdots{ display:flex; gap:8px; margin-bottom:14px; }
+  .stepdots i{ width:34px; height:10px; border-radius:99px; background:var(--line); }
+  .stepdots i.done{ background:var(--orange); }
+
+  /* reports */
+  .rep-item{ border:1px solid var(--line); border-radius:18px; padding:14px 16px; margin-bottom:10px; background:var(--card); }
+  .rep-item .meta{ color:var(--muted); font-size:15px; }
+  .rep-item .who{ font-weight:700; font-size:19px; }
+  .rep-item dl{ margin:8px 0 0; }
+  .rep-item dt{ font-weight:700; margin-top:8px; font-size:16px; color:var(--muted); }
+  .rep-item dd{ margin:2px 0 0; }
+  .sendbox label{ font-weight:700; display:block; margin:10px 0 6px; }
+  .sendbox label:first-of-type{ margin-top:0; }
+  .sendok{ background:var(--goodbg); color:var(--goodink); border-radius:14px; padding:14px 16px; margin-top:14px; font-weight:700; }
+
+  .linkbtn{ background:none; border:0; padding:10px 0; min-height:44px; font:inherit; color:var(--ink); text-decoration:underline; cursor:pointer; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------- storage (per-device, optional) ---------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('sq_'+k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('sq_'+k, JSON.stringify(v)); }catch(e){} }
+};
+
+const BANDS = { k2:"Grades K–2", g35:"Grades 3–5", g68:"Grades 6–8", g912:"Grades 9–12" };
+
+/* Question format: [question, correct answer, [wrong answers], explanation] */
+const UNITS = [
+{ id:"rules", cat:"PE", icon:"🤝", name:"Rules, Safety & Sportsmanship", q:{
+ k2:[
+  ["What should you do when the teacher gives the freeze signal?","Stop and listen",["Keep running","Shout loudly"],"Freezing and listening keeps everyone safe and helps us hear what comes next."],
+  ["What kind of shoes are best for P.E.?","Sneakers",["Flip-flops","Boots"],"Sneakers grip the floor and protect your feet when you run and jump."],
+  ["A friend falls down during a game. What should you do?","Help them or get the teacher",["Laugh at them","Keep playing and ignore them"],"Good teammates look out for each other."],
+  ["What is personal space?","The space around your body where you won't bump anyone",["Your friend's spot","The hallway"],"Staying in your own space keeps everyone from bumping and falling."],
+  ["Your team lost the game. What should you say?","Good game!",["That's not fair!","I quit!"],"Good sports say 'good game' whether they win or lose."],
+  ["When can you use the equipment?","When the teacher says it's time",["Whenever you want","Before class starts"],"Waiting for the signal keeps equipment and people safe."]],
+ g35:[
+  ["What does it mean to be a good sport?","Play fair and be respectful whether you win or lose",["Only play when you're winning","Argue with every call"],"Being a good sport means respecting the game, your teammates, and the other team."],
+  ["In a game with no referee, like GaGa Ball at recess, who makes the calls?","The players, honestly",["Whoever yells the loudest","Nobody, just keep playing"],"When players referee themselves, honesty is what keeps the game fair and fun."],
+  ["A teammate makes a mistake that costs a point. What's the best thing to say?","You'll get the next one!",["You made us lose!","Nothing, just roll your eyes"],"Encouragement helps your team bounce back faster than blame does."],
+  ["Why do we warm up before activity?","To get muscles ready and help prevent injury",["To get tired before the game","There's no reason"],"Warm muscles stretch and move better, which lowers the chance of getting hurt."],
+  ["You disagree with a close call in Four Square. What should you do?","Stay calm and use rock-paper-scissors or ask the teacher",["Stop playing and argue","Take the ball and leave"],"Settling it quickly and fairly keeps the game moving for everyone."],
+  ["Why should you drink water during P.E.?","To replace the water you lose when you sweat",["To feel full","It makes you instantly faster"],"Staying hydrated helps your body stay cool and keeps your energy up."]],
+ g68:[
+  ["Which action shows respect for an opponent?","Shaking hands or saying 'good game' after the match",["Taunting after you score","Ignoring them at the end"],"Respecting opponents is part of the game, whether you win or lose."],
+  ["What is the main purpose of a cool-down?","To gradually lower your heart rate and help your body recover",["To burn the most calories","To make muscles tighter"],"A cool-down lets your heart rate and breathing return to normal gradually."],
+  ["A classmate is being left out of your group activity. What's the best move?","Invite them in and give them a role",["Let them figure it out","Tell the teacher they won't participate"],"Including everyone makes the group stronger and the activity better."],
+  ["Why is it important to follow the rules of a game?","Rules keep play fair and safe for everyone",["Rules only matter in real sports","So the teacher isn't upset"],"Rules give everyone the same chance and protect players from injury."],
+  ["What should you do before using a jump rope, scooter, or other equipment?","Check that it isn't damaged and that you have enough space",["Nothing, just start","Test it on a classmate"],"A quick safety check prevents a lot of avoidable injuries."],
+  ["What is fair play?","Following rules, being honest, and respecting others",["Winning any way you can","Only playing against weaker teams"],"Fair play is about how you compete, not just whether you win."]],
+ g912:[
+  ["Which behavior best shows leadership in a team activity?","Including all teammates and helping plan strategy",["Taking every shot yourself","Criticizing weaker players"],"Strong leaders raise the level of everyone around them."],
+  ["Why do organized sports use officials and rules?","To make competition fair and safe",["To slow the game down","To help one team win"],"Consistent rules and officials protect athletes and the integrity of the game."],
+  ["You feel a sharp pain during exercise. What should you do?","Stop and tell the teacher or coach",["Push through it","Wait until class ends"],"Sharp pain is a warning sign. Stopping early can prevent a small injury from becoming a serious one."],
+  ["Which is an example of intrinsic motivation?","Playing because you enjoy getting better",["Playing only to win a trophy","Playing because someone pays you"],"Intrinsic motivation comes from inside you, and it tends to keep people active for life."],
+  ["Which are warning signs of heat exhaustion?","Heavy sweating, dizziness, and nausea",["Feeling full of energy","A bigger appetite"],"If you notice these signs, move to a cool place, drink water, and tell an adult."],
+  ["A teammate is getting frustrated and starting to argue. What's most helpful?","Calmly help them refocus on the next play",["Argue back","Tell them to leave the game"],"Staying calm yourself is often the fastest way to calm a teammate down."]]
+}},
+{ id:"move", cat:"PE", icon:"🏃", name:"Movement Skills & Concepts", q:{
+ k2:[
+  ["Which movement uses just ONE foot?","Hop",["Jump","Gallop"],"A hop takes off and lands on the same foot."],
+  ["What does a zigzag pathway look like?","A line that changes direction back and forth",["A straight line","A circle"],"Zigzag pathways go side to side, like a lightning bolt."],
+  ["What is a HIGH level?","Reaching up tall",["Crawling on the floor","Sitting down"],"High level means your body is up tall, like stretching toward the ceiling."],
+  ["A skip is a step and a...","Hop",["Slide","Jump"],"Skipping is step-hop, step-hop, switching feet each time."],
+  ["Which pathway is curvy like a snake?","Curved",["Straight","Zigzag"],"A curved pathway bends smoothly without sharp corners."],
+  ["When you gallop, what does your front foot do?","Stays in front the whole time",["Switches every step","Stays in the air"],"In a gallop, the same foot leads and the back foot chases it."]],
+ g35:[
+  ["What's the difference between a hop and a jump?","A hop uses one foot; a jump uses two feet",["They're exactly the same","A jump uses one foot"],"Hops take off and land on the same foot. Jumps usually take off and land on two feet."],
+  ["Which locomotor skill moves you sideways?","Slide",["Skip","Leap"],"In a slide, you step to the side and bring your feet together, facing forward."],
+  ["How is a leap different from a run?","You push off one foot and land on the other with a longer, higher step",["Both feet land together","You move backward"],"A leap is like a giant running step that stretches through the air."],
+  ["What is general space?","All the open space everyone shares in the gym",["The space right around your body","Only the space inside your hoop"],"General space is shared, so you have to watch where others are moving."],
+  ["What does moving at a LOW level mean?","Moving close to the ground",["Moving slowly","Moving quietly"],"Low level means crouching or crawling near the floor."],
+  ["Which of these is a non-locomotor movement?","Twisting in place",["Running","Galloping"],"Non-locomotor movements happen without traveling, like bending, twisting, and stretching."]],
+ g68:[
+  ["Which movement concept describes how fast you move?","Speed (time)",["Pathway","Level"],"Speed is about timing: fast, slow, speeding up, or slowing down."],
+  ["In movement, what does force describe?","How strong or light a movement is",["Which direction you face","How high you are"],"Force ranges from strong, like a hard throw, to light, like a soft toss."],
+  ["Changing direction quickly to avoid a defender uses which skill?","Agility",["Flexibility","Muscular endurance"],"Agility is the ability to change direction quickly while staying in control."],
+  ["How should you land from a jump?","Bend your knees to absorb the force",["Keep your knees straight and locked","Land on your heels only"],"Bent knees spread the impact out and protect your joints."],
+  ["What do relationships in movement describe?","How you move in relation to people or objects, like over, under, or around",["How well you get along with friends","Your grade in P.E."],"Relationships include over, under, around, beside, leading, and following."],
+  ["Which is part of a mature running pattern?","Arms swing opposite to the legs",["Arms stay stiff at your sides","Running flat-footed"],"Opposite arm and leg movement helps you balance and run more efficiently."]],
+ g912:[
+  ["What does opposition mean in movement?","Moving the arm opposite the leading leg",["Moving against a defender","Moving backward"],"Opposition balances rotation in the body during running, throwing, and walking."],
+  ["Why does bending your knees when landing reduce impact?","It spreads the force over a longer time",["It makes you lighter","It speeds up the landing"],"Increasing the time it takes to stop lowers the peak force on your joints."],
+  ["How can you lower your center of gravity?","Bend your knees and widen your stance",["Stand tall on your toes","Raise your arms overhead"],"A lower center of gravity makes you harder to knock off balance."],
+  ["Which stance gives the most stable base of support?","Feet shoulder-width apart, knees bent",["Feet together, standing tall","Standing on one foot"],"A wider base and lower center of gravity increase stability."],
+  ["What does follow-through in a throw or kick help with?","Accuracy, power, and lower injury risk",["It only looks good","It slows the ball down"],"Follow-through keeps force moving toward the target and lets your body slow down safely."],
+  ["Why do sprinters lean forward at the start?","To move their center of gravity ahead and accelerate",["To see the finish line","To rest their legs"],"Leaning forward lets sprinters push back into the ground and speed up faster."]]
+}},
+{ id:"fitness", cat:"PE", icon:"💪", name:"Fitness Components", q:{
+ k2:[
+  ["Which activity makes your heart pump fast?","Running",["Sleeping","Reading"],"Moving your whole body gets your heart pumping and makes it stronger."],
+  ["Stretching helps your body be more...","Flexible (bendy)",["Tired","Hungry"],"Stretching helps your muscles move and bend more easily."],
+  ["Which activity makes your muscles stronger?","Climbing the monkey bars",["Watching TV","Napping"],"Pulling, pushing, and climbing all build muscle strength."],
+  ["Your heart is a...","Muscle",["Bone","Balloon"],"Your heart is a muscle that gets stronger when you exercise."],
+  ["How can you tell your heart is working hard?","You can feel it beating faster",["Your hair gets longer","You feel sleepy"],"Put your hand on your chest after running to feel your heart pumping."],
+  ["About how long should kids be active every day?","60 minutes",["5 minutes","10 hours"],"Kids need about an hour of active play every day to stay healthy."]],
+ g35:[
+  ["Cardiovascular endurance is the ability of your...","Heart and lungs to work for a long time",["Muscles to lift heavy things","Body to bend"],"Activities like running, swimming, and tag build cardiovascular endurance."],
+  ["Holding a wall sit for a long time tests your...","Muscular endurance",["Flexibility","Speed"],"Muscular endurance is how long your muscles can keep working without getting too tired."],
+  ["Which activity best builds flexibility?","Yoga",["Sprinting","Arm wrestling"],"Yoga poses and stretches help your muscles and joints move through a bigger range."],
+  ["What does your pulse tell you?","How fast your heart is beating",["How tall you are","How strong you are"],"You can count your pulse at your wrist or neck."],
+  ["The PACER test measures...","Cardiovascular endurance",["Flexibility","Muscle strength"],"The PACER checks how long your heart and lungs can keep up with the beeps."],
+  ["Tug of war mainly builds...","Muscular strength",["Flexibility","Balance only"],"Pulling hard against resistance builds muscle strength."]],
+ g68:[
+  ["Which is NOT one of the five health-related fitness components?","Speed",["Flexibility","Body composition"],"The five are cardiovascular endurance, muscular strength, muscular endurance, flexibility, and body composition. Speed is skill-related."],
+  ["In the FITT principle, what does the F stand for?","Frequency",["Fitness","Force"],"FITT stands for Frequency, Intensity, Time, and Type."],
+  ["The sit-and-reach test measures...","Flexibility",["Muscle strength","Heart health"],"It measures how far you can reach, mostly testing hamstring and lower-back flexibility."],
+  ["Which is a skill-related fitness component?","Reaction time",["Muscular endurance","Flexibility"],"Skill-related components are agility, balance, coordination, power, reaction time, and speed."],
+  ["What does the overload principle mean?","Gradually doing more than your body is used to so it gets stronger",["Exercising until you're exhausted every day","Lifting as heavy as possible right away"],"Small, steady increases in challenge are how fitness improves safely."],
+  ["How much physical activity do kids and teens ages 6–17 need each day?","At least 60 minutes",["10 minutes","3 hours"],"Most of those 60 minutes should be moderate to vigorous activity."]],
+ g912:[
+  ["Using 220 minus age, what's the estimated maximum heart rate for a 16-year-old?","204 beats per minute",["184 beats per minute","236 beats per minute"],"220 − 16 = 204. It's an estimate, but it's useful for planning exercise intensity."],
+  ["During vigorous activity, the talk test says you can...","Say only a few words before pausing for breath",["Sing easily","Hold a full conversation"],"At moderate intensity you can talk but not sing. At vigorous intensity, only a few words."],
+  ["What does body composition refer to?","The proportion of fat mass to lean mass",["Your height","Your weight alone"],"Body composition looks at what your body is made of, not just the number on a scale."],
+  ["Adults should get at least how much moderate aerobic activity per week?","150 minutes",["30 minutes","500 minutes"],"That's about 30 minutes a day, five days a week."],
+  ["Plyometric exercises like box jumps mainly develop...","Power",["Flexibility","Body composition"],"Power combines strength and speed in explosive movements."],
+  ["Which principle says fitness gains fade when you stop training?","Reversibility",["Overload","Specificity"],"Use it or lose it: fitness declines when training stops."]]
+}},
+{ id:"coop", cat:"PE", icon:"🧩", name:"Cooperation & Teamwork", q:{
+ k2:[
+  ["How can you be a good partner?","Take turns and share",["Grab everything first","Do it only your way"],"Taking turns makes the game fair and fun for both of you."],
+  ["Your partner has a different idea. What should you do?","Listen to their idea",["Say no right away","Walk away"],"Listening to each other helps you find the best plan together."],
+  ["What can you say to cheer on a teammate?","Nice try! You can do it!",["You're too slow","Go away"],"Kind words help your team keep trying."],
+  ["What does working together mean?","Everyone helps the group reach the goal",["One person does all the work","Everyone does their own thing"],"Teams are strongest when everyone helps."],
+  ["What should you do while you wait for your turn?","Wait patiently and cheer for others",["Push to the front","Wander away"],"Cheering while you wait helps your whole team."],
+  ["Your team's tower falls down. What's the best thing to do?","Try again together",["Blame someone","Quit"],"Mistakes happen. Good teams try again."]],
+ g35:[
+  ["What makes a team plan work best?","Everyone shares ideas and agrees on a plan",["The loudest person decides","No plan at all"],"When everyone has a voice, the team is more likely to follow the plan."],
+  ["During a silent challenge, how can teammates communicate?","Hand signals and eye contact",["They can't communicate","By shouting"],"Communication isn't only words. Gestures and signals work too."],
+  ["A teammate is struggling with the task. What should you do?","Offer help or a tip",["Laugh","Do it for them without asking"],"Helping a teammate helps the whole team succeed."],
+  ["What is the goal of a cooperative challenge?","Succeed together as a group",["Beat your own teammates","Finish first alone"],"In cooperative games, the team wins or learns together."],
+  ["Which is an example of active listening?","Looking at the speaker and not interrupting",["Talking over them","Looking away"],"Active listening shows your teammate their idea matters."],
+  ["Why do teams talk about what worked after a challenge?","To improve their plan next time",["To pick someone to blame","It wastes time"],"Reflecting is how teams get better from round to round."]],
+ g68:[
+  ["What's the first step in solving a group problem?","Make sure everyone understands the goal",["Start moving right away","Pick a winner"],"A team that agrees on the goal wastes less time."],
+  ["What does a good team leader do?","Makes sure every voice is heard",["Makes every decision alone","Only talks to their friends"],"Good leaders use everyone's strengths."],
+  ["What does compromise mean?","Each side gives a little to reach an agreement",["One side always gets its way","Nobody agrees"],"Compromise keeps a team moving forward."],
+  ["Which is an example of constructive feedback?","'Try stepping toward the target. It worked for me.'",["'You're terrible at this.'","'Whatever, just do it.'"],"Constructive feedback is specific and helpful."],
+  ["Why is trust important in teamwork challenges?","Teammates rely on each other to do their part safely",["It isn't important","So you can blame others"],"Trust lets a team take on harder challenges together."],
+  ["How do group roles like planner, encourager, or timekeeper help?","Everyone has a clear job and contributes",["They make things confusing","Only the planner matters"],"Roles make sure no one is left out and nothing is forgotten."]],
+ g912:[
+  ["What is the first stage of team development (Tuckman)?","Forming",["Performing","Adjourning"],"The stages are forming, storming, norming, performing, and adjourning."],
+  ["What happens in the storming stage?","Members disagree as roles and ideas get sorted out",["The team works perfectly","The team breaks up"],"Conflict in the storming stage is normal and can lead to a stronger team."],
+  ["How is conflict on a team best handled?","Address it calmly and focus on solutions",["Ignore it","Pick sides"],"Solution-focused conversations keep teams productive."],
+  ["Which shows inclusive leadership?","Adapting a strategy so every skill level can contribute",["Only passing to the best players","Benching newer players"],"Inclusive teams get more out of every member."],
+  ["What is social loafing?","Putting in less effort because you're in a group",["Resting between sets","Being friendly"],"Clear roles and accountability help prevent social loafing."],
+  ["Which is effective communication during a game?","Short, clear calls like 'Mine!' or 'Switch!'",["Long explanations mid-play","Staying silent"],"Quick, clear calls prevent collisions and confusion."]]
+}},
+{ id:"throw", cat:"PE", icon:"⚾", name:"Throwing, Catching & Kicking", q:{
+ k2:[
+  ["When you throw underhand, which foot steps forward?","The foot opposite your throwing hand",["The same foot as your throwing hand","Neither foot"],"Stepping with the opposite foot gives your throw more power and balance."],
+  ["Before you throw, where should your eyes look?","At your target",["At your feet","At the ceiling"],"Looking at the target helps the ball go where you want it."],
+  ["How should your hands look when you get ready to catch?","Out in front and open",["Behind your back","In your pockets"],"Ready hands are out in front, open, and watching the ball."],
+  ["After you throw, what should your arm do?","Follow through toward the target",["Stop right away","Swing behind you"],"Following through points your arm right where you want the ball to go."],
+  ["When you roll a ball, what should you do?","Bend your knees and keep the ball low",["Throw it high","Kick it"],"A low, smooth roll stays on the ground and goes straight."],
+  ["Which part of your foot is best for passing a soccer ball?","The inside of your foot",["Your heel","The tip of your toes"],"The inside of your foot is flat and wide, so passes go straight."]],
+ g35:[
+  ["How should you stand when starting an overhand throw?","Side facing the target",["Back to the target","Facing away"],"Starting sideways lets your body turn and add power to the throw."],
+  ["To catch a ball above your waist, point your...","Thumbs together",["Pinkies together","Elbows out"],"Thumbs together above the waist, pinkies together below the waist."],
+  ["When kicking, where should your plant foot go?","Next to the ball",["Far behind the ball","On top of the ball"],"Planting next to the ball gives you balance and control."],
+  ["How do you catch a ball softly?","Pull your hands in toward your body as it arrives",["Keep your arms stiff","Clap at the ball"],"Giving with the ball absorbs its force so it doesn't bounce out."],
+  ["When dribbling a basketball, what should you use?","Your finger pads, not your palm",["Your fist","Your palm only"],"Finger pads give you more control of the ball."],
+  ["Why step with the opposite foot when throwing?","To throw farther and more accurately",["It looks cool","To stop yourself"],"The step helps your whole body put force into the throw."]],
+ g68:[
+  ["In a mature overhand throw, what do the hips and shoulders do?","Rotate toward the target",["Stay still","Turn away from the target"],"Rotation adds power by using the whole body, not just the arm."],
+  ["Which is the correct order for an overhand throw?","Side to target, arm back, step, rotate, follow through",["Step, follow through, arm back","Follow through, rotate, step"],"Each part builds on the one before it."],
+  ["How do you trap (stop) a soccer ball?","Cushion it by giving with your foot",["Stomp on it hard","Kick it back right away"],"Giving with the ball takes away its speed so it stays close."],
+  ["A bounce pass should hit the floor about how far toward your teammate?","About two-thirds of the way",["Right at your feet","Right at their feet"],"Two-thirds of the way lets the ball bounce up to your teammate's waist."],
+  ["What does leading a teammate mean?","Throwing to the space where they will be",["Throwing where they are standing now","Throwing it to yourself"],"Leading a moving teammate lets them catch without slowing down."],
+  ["Why keep your eyes up while dribbling?","To see teammates, defenders, and open space",["To look cool","It doesn't matter"],"Heads-up dribbling helps you make better decisions."]],
+ g912:[
+  ["Where does most of a throw's power come from?","Rotation from the legs to the hips, trunk, and arm (the kinetic chain)",["The wrist alone","The fingers"],"Power builds as each body segment passes force to the next."],
+  ["Why does follow-through reduce injury risk?","It lets the arm slow down gradually",["It makes the throw shorter","It doesn't reduce risk"],"Stopping the arm abruptly puts extra stress on the shoulder and elbow."],
+  ["What does a soft first touch when receiving a pass mean?","Absorbing the ball's force by moving with it",["Hitting the ball away","Letting it bounce off you"],"A soft touch keeps the ball close so you can play quickly."],
+  ["When shooting a basketball, where should your elbow be?","Under the ball, lined up with the hoop",["Pointing out to the side","Behind your head"],"An aligned elbow keeps the shot straight."],
+  ["What does BEEF stand for in shooting?","Balance, Eyes, Elbow, Follow-through",["Bounce, Elbow, Energy, Fake","Ball, Eyes, Effort, Finish"],"BEEF is a common checklist for shooting form."],
+  ["How do you drive a soccer ball low and hard?","Strike it with your laces, toe pointed down, knee over the ball",["Use the inside of your foot","Kick it with your toe"],"Laces with the knee over the ball keeps the shot powerful and low."]]
+}},
+{ id:"sports", cat:"PE", icon:"🏆", name:"Sports & Game Strategy", q:{
+ k2:[
+  ["How can you avoid being tagged in tag?","Dodge and change direction",["Stand still","Close your eyes"],"Quick changes of direction make you hard to tag."],
+  ["When moving in a busy game, where should your eyes be?","Up, watching where you're going",["On your shoes","Closed"],"Heads up helps you avoid bumping into others."],
+  ["In a relay, when do you go?","When your teammate tags you",["Whenever you want","Before the teacher says go"],"Waiting for the tag keeps the relay fair."],
+  ["Which game uses a big pit and a soft ball?","GaGa Ball",["Soccer","Bowling"],"GaGa Ball is played in a pit, hitting the ball low."],
+  ["In which sport do you kick a ball into a goal?","Soccer",["Basketball","Baseball"],"In soccer, you use your feet to score goals."],
+  ["Which sport uses a bat?","Baseball or softball",["Soccer","Swimming"],"You swing a bat to hit the ball in baseball and softball."]],
+ g35:[
+  ["In Four Square, how many times can the ball bounce in your square?","Once",["Twice","Never"],"One bounce, then hit it to another square."],
+  ["In GaGa Ball, you're out if the ball hits you...","On or below the knee",["Anywhere","Only on the head"],"Keeping hits low is what keeps GaGa Ball safe."],
+  ["Which of these is an invasion game?","Soccer",["Bowling","Volleyball"],"In invasion games, you move into the other team's space to score."],
+  ["On offense, why move to an open space?","To get open for a pass",["To hide","To rest"],"Open space gives your teammate a safe place to pass."],
+  ["In a net game like volleyball, what's the goal?","Send the ball over so the other team can't return it",["Hold the ball","Hit it into the net"],"Net games are about placing the ball where opponents aren't."],
+  ["In Four Square, who serves the ball?","The player in the highest square",["Anyone","The player who just got out"],"The top square serves to start each point."]],
+ g68:[
+  ["Which category does tennis belong to?","Net/wall games",["Invasion games","Target games"],"Net/wall games include tennis, volleyball, badminton, and pickleball."],
+  ["Which are striking and fielding games?","Softball and kickball",["Soccer and hockey","Golf and bowling"],"Striking and fielding teams take turns batting and fielding."],
+  ["On defense in basketball, where should you stay?","Between your opponent and the basket",["Behind your opponent","Under the basket only"],"Staying between them and the goal protects the basket."],
+  ["What does creating width on offense mean?","Spreading out across the field to open space",["Everyone crowding the ball","Standing in a line"],"Spreading out stretches the defense and opens passing lanes."],
+  ["Which is a target game?","Golf",["Hockey","Badminton"],"Target games include golf, bowling, archery, and cornhole."],
+  ["Why do teams use a zone defense?","Each player guards an area instead of one person",["To rest","It's required"],"Zones protect space and can slow down strong offenses."]],
+ g912:[
+  ["What does transition mean in invasion games?","Switching quickly between offense and defense",["Changing uniforms","Substituting players"],"Fast transitions often create scoring chances."],
+  ["What does the offside rule in soccer prevent?","Attackers waiting behind the last defender for a pass",["Passing backward","Goalkeepers using hands"],"Offside keeps attackers from camping near the goal."],
+  ["In volleyball, how many contacts can a team use before sending the ball over?","Three",["One","Five"],"Typically bump, set, and spike."],
+  ["What is a give-and-go?","Passing to a teammate, cutting, and getting the ball back",["A penalty","A type of serve"],"The give-and-go uses quick movement to beat a defender."],
+  ["What does man-to-man defense mean?","Each defender guards a specific opponent",["Everyone guards the ball","Defenders guard areas"],"Man-to-man puts direct pressure on each attacker."],
+  ["What are lifetime sports?","Activities you can keep playing as an adult, like tennis or golf",["Sports you only play in school","Sports with lifetime bans"],"Lifetime sports help people stay active for decades."]]
+}},
+{ id:"nutrition", cat:"Health", icon:"🍎", name:"Nutrition", q:{
+ k2:[
+  ["Which food is a fruit?","Apple",["Carrot","Bread"],"Apples, bananas, and berries are all fruits."],
+  ["What's the best drink when you're thirsty?","Water",["Soda","A milkshake"],"Water keeps your body working its best."],
+  ["How many food groups are on MyPlate?","Five",["Two","Ten"],"Fruits, vegetables, grains, protein, and dairy."],
+  ["Which food is a vegetable?","Broccoli",["Banana","Cheese"],"Broccoli, carrots, and peas are vegetables."],
+  ["Which food helps build strong bones?","Milk or yogurt",["Candy","Chips"],"Dairy foods have calcium, which builds strong bones."],
+  ["Why do we eat breakfast?","To give our body energy for the day",["To get sleepy","To skip lunch"],"Breakfast fuels your brain and body for learning and playing."]],
+ g35:[
+  ["Which food group do beans, eggs, and chicken belong to?","Protein",["Grains","Fruits"],"Protein foods help build and repair your body."],
+  ["About how much of MyPlate should be fruits and vegetables?","About half",["None","All of it"],"Filling half your plate with fruits and veggies is a simple healthy habit."],
+  ["What do whole grains like brown rice give you?","Fiber and long-lasting energy",["Only sugar","Nothing"],"Whole grains keep you full and energized longer."],
+  ["Which snack is the healthiest choice?","Apple slices with peanut butter",["A candy bar","A soda"],"Fruit plus protein gives you steady energy."],
+  ["Which nutrient helps build and repair muscles?","Protein",["Sugar","Salt"],"Protein is your body's building material."],
+  ["Why should you limit sugary drinks?","They have lots of added sugar and few nutrients",["They're too cold","They have too much water"],"Water and milk are better everyday choices."]],
+ g68:[
+  ["What is the main job of carbohydrates?","Provide energy",["Build bones","Fight germs"],"Carbohydrates are your body's main fuel source."],
+  ["Which food has healthy unsaturated fats?","Avocado or nuts",["Butter","Fried chicken skin"],"Unsaturated fats support heart health."],
+  ["On a Nutrition Facts label, what does 20% Daily Value or more mean?","The food is high in that nutrient",["The food is low in that nutrient","It has 20 calories"],"5% or less is low; 20% or more is high."],
+  ["Which mineral is important for strong bones?","Calcium",["Sodium","Sugar"],"Calcium comes from dairy, leafy greens, and fortified foods."],
+  ["What does the serving size on a label tell you?","The amount all the nutrition info is based on",["How many people can eat it","The size of the box"],"If you eat two servings, you double everything on the label."],
+  ["What can dehydration cause?","Headaches, tiredness, and muscle cramps",["Extra energy","Better focus"],"Drink water before, during, and after activity."]],
+ g912:[
+  ["How many calories are in 1 gram of fat?","9",["4","7"],"Fat has 9 calories per gram; carbohydrates and protein have 4."],
+  ["How many calories per gram do carbohydrates and protein provide?","4",["9","2"],"Both carbohydrates and protein provide 4 calories per gram."],
+  ["The Dietary Guidelines say added sugars should be less than what share of daily calories?","10%",["50%","25%"],"Keeping added sugars under 10% leaves room for nutrient-rich foods."],
+  ["What can iron deficiency cause?","Anemia, with tiredness and weakness",["Stronger bones","Better vision"],"Iron helps red blood cells carry oxygen."],
+  ["Which is a warning sign of a fad diet?","It cuts out entire food groups for quick results",["It includes all food groups","It's recommended by a doctor"],"Balanced eating over time works better than extreme rules."],
+  ["What's a good recovery meal after intense exercise?","Carbohydrates and protein",["Nothing at all","Only soda"],"Carbs refuel energy stores and protein helps repair muscles."]]
+}},
+{ id:"body", cat:"Health", icon:"❤️", name:"Body Systems & Heart Health", q:{
+ k2:[
+  ["What does your heart do?","Pumps blood around your body",["Helps you see","Digests food"],"Your heart pumps blood all day and all night."],
+  ["Which body part helps you breathe?","Lungs",["Stomach","Knees"],"Your lungs fill with air every time you breathe in."],
+  ["What do your bones do?","Help your body stand up and keep its shape",["Pump blood","Help you taste"],"Your skeleton holds you up and protects your insides."],
+  ["Where is your brain?","In your head",["In your tummy","In your foot"],"Your brain is protected by your skull."],
+  ["What happens to your breathing when you run?","It gets faster",["It stops","It gets slower"],"Your body needs more air when you move fast."],
+  ["What do muscles help you do?","Move your body",["Sleep","Grow hair"],"Muscles pull on bones to help you move."]],
+ g35:[
+  ["What do your lungs bring into your body?","Oxygen",["Food","Water"],"Oxygen goes from your lungs into your blood."],
+  ["Which system includes your heart and blood vessels?","Circulatory system",["Digestive system","Skeletal system"],"The circulatory system moves blood through your body."],
+  ["About how many bones does an adult have?","206",["50","1,000"],"Babies are born with more, but some bones fuse together as they grow."],
+  ["Where can you easily feel your pulse?","Your wrist or neck",["Your elbow","Your knee"],"Use two fingers, not your thumb, to count your pulse."],
+  ["Which two systems work together to help you move?","Muscular and skeletal systems",["Digestive and nervous","Circulatory and digestive"],"Muscles pull on bones to create movement."],
+  ["Why does your heart beat faster during exercise?","Your muscles need more oxygen",["It's scared","It's tired"],"A faster heartbeat delivers more oxygen-rich blood to working muscles."]],
+ g68:[
+  ["How many chambers does the human heart have?","Four",["Two","Six"],"Two atria on top and two ventricles on the bottom."],
+  ["Which way do arteries carry blood?","Away from the heart",["Toward the heart","Only to the lungs"],"Arteries carry blood away; veins bring it back."],
+  ["Where does gas exchange happen in the lungs?","Alveoli",["Trachea","Diaphragm"],"Alveoli are tiny air sacs where oxygen enters the blood."],
+  ["Which muscle helps you breathe?","Diaphragm",["Biceps","Quadriceps"],"The diaphragm pulls down to let air rush into your lungs."],
+  ["What do tendons connect?","Muscles to bones",["Bones to bones","Nerves to skin"],"Tendons let muscles pull on bones."],
+  ["How does regular exercise change the heart?","It gets stronger and pumps more blood with each beat",["It gets weaker","It stops growing"],"A stronger heart doesn't have to beat as often at rest."]],
+ g912:[
+  ["What is a normal resting heart rate for most adults?","60–100 beats per minute",["20–40 beats per minute","150–200 beats per minute"],"Well-trained athletes are often below 60."],
+  ["In a blood pressure reading, what does the systolic (top) number measure?","Pressure when the heart beats",["Pressure between beats","Heart rate"],"The bottom number, diastolic, is the pressure between beats."],
+  ["Which blood vessels have walls thin enough for exchange with tissues?","Capillaries",["Arteries","Veins"],"Capillaries deliver oxygen and nutrients to cells."],
+  ["What do ligaments connect?","Bone to bone",["Muscle to bone","Skin to muscle"],"Ligaments stabilize joints."],
+  ["What does a low resting heart rate in an athlete usually mean?","A more efficient, well-trained heart",["A heart problem every time","Dehydration"],"A trained heart pumps more blood with each beat, so it beats less often."],
+  ["What is atherosclerosis?","A buildup of plaque in the arteries",["A broken bone","A lung infection"],"Regular activity and healthy eating help lower the risk."]]
+}},
+{ id:"hygiene", cat:"Health", icon:"🧼", name:"Hygiene & Disease Prevention", q:{
+ k2:[
+  ["How long should you wash your hands?","20 seconds",["2 seconds","5 minutes"],"That's about how long it takes to sing Happy Birthday twice."],
+  ["When should you wash your hands?","After the bathroom and before eating",["Only on weekends","Never"],"Clean hands help stop germs."],
+  ["How should you cover a sneeze?","Into your elbow",["Into your hands","Don't cover it"],"Your elbow catches germs so they don't spread from your hands."],
+  ["How many times a day should you brush your teeth?","Two",["Zero","Ten"],"Brush in the morning and before bed."],
+  ["What can germs do?","Make you sick",["Make you taller","Make you faster"],"Washing hands and covering sneezes helps keep germs away."],
+  ["Why do we need sleep?","To help our body grow and rest",["To get hungry","It isn't needed"],"Sleep helps your body and brain recharge."]],
+ g35:[
+  ["How long should you brush your teeth each time?","Two minutes",["10 seconds","10 minutes"],"Two minutes, twice a day, keeps teeth healthy."],
+  ["What do white blood cells do?","Fight germs",["Carry oxygen","Help you digest food"],"White blood cells are part of your immune system."],
+  ["What's one of the best ways to stop germs from spreading?","Wash hands with soap and water",["Share water bottles","Sneeze into your hands"],"Handwashing removes germs before they spread."],
+  ["How much sleep do kids ages 6–12 need each night?","9–12 hours",["4–5 hours","15–18 hours"],"Enough sleep helps you learn, grow, and stay healthy."],
+  ["Why shouldn't you share water bottles?","Germs can spread through saliva",["The water gets warm","It's against the rules for no reason"],"Keeping your own bottle is an easy way to stay healthy."],
+  ["What does your immune system do?","Protects your body from germs",["Helps you run fast","Makes your hair grow"],"Your immune system recognizes and fights off invaders."]],
+ g68:[
+  ["Bacteria and viruses are both types of...","Pathogens",["Vitamins","Nutrients"],"Pathogens are germs that can cause disease."],
+  ["What do antibiotics work against?","Bacteria, not viruses",["Viruses, not bacteria","Every illness"],"Antibiotics don't work on colds or the flu, which are caused by viruses."],
+  ["How do vaccines help?","They train your immune system to recognize a germ",["They cure every disease","They replace sleep"],"Vaccines help your body respond faster if you're exposed."],
+  ["How much sleep do teens ages 13–18 need?","8–10 hours",["5–6 hours","12–14 hours"],"Teens need more sleep than many realize."],
+  ["How can you prevent athlete's foot?","Keep feet clean and dry and wear shower shoes",["Share towels","Wear damp socks"],"The fungus grows in warm, damp places."],
+  ["Sweat glands get more active during puberty. What's a good habit?","Shower daily and use deodorant",["Shower once a month","Skip clean clothes"],"Daily hygiene helps you feel confident and healthy."]],
+ g912:[
+  ["What is a communicable disease?","One that can spread from person to person",["One you're born with","One caused only by diet"],"The flu and strep throat are communicable."],
+  ["What is herd (community) immunity?","When enough people are immune that a disease has trouble spreading",["When animals get sick","Immunity from one cold"],"It helps protect people who can't be vaccinated."],
+  ["Which is a noncommunicable disease?","Type 2 diabetes",["The flu","Strep throat"],"Noncommunicable diseases aren't spread by germs."],
+  ["Which helps prevent foodborne illness?","Cooking foods to safe temperatures and washing hands",["Leaving food out overnight","Rinsing raw chicken in the sink"],"Clean, separate, cook, and chill are the four key steps."],
+  ["What makes antibiotic resistance worse?","Using antibiotics when they aren't needed or not finishing them",["Washing hands","Getting enough sleep"],"Using antibiotics correctly helps them keep working."],
+  ["Which habit most reduces skin cancer risk?","Using SPF 30+ sunscreen and limiting UV exposure",["Tanning beds","Only using sunscreen in summer"],"Sun protection matters year-round."]]
+}},
+{ id:"mental", cat:"Health", icon:"🧠", name:"Mental & Emotional Health", q:{
+ k2:[
+  ["When you feel angry, what can help you calm down?","Take slow, deep breaths",["Yell at a friend","Throw something"],"Deep breaths slow your body down and help you think."],
+  ["If you feel sad, who can you talk to?","A trusted adult, like a parent or teacher",["No one","A stranger"],"Talking about feelings helps."],
+  ["Which face shows happy?","😀",["😢","😠"],"A smile usually means happy. All feelings are okay to have."],
+  ["Which feelings are okay to have?","All kinds of feelings",["Only happy ones","None"],"Everyone feels happy, sad, mad, and scared sometimes."],
+  ["What's a kind thing to say to a friend?","Want to play with me?",["Go away","You can't play"],"Kind words make people feel included."],
+  ["When you make a mistake, what can you say?","I'll try again!",["I'm bad at everything","I give up"],"Mistakes help us learn."]],
+ g35:[
+  ["Which is a healthy way to handle stress?","Exercise, deep breathing, or talking to someone",["Keeping it all inside","Being mean to others"],"Healthy coping helps your body and mind."],
+  ["What does growth mindset mean?","Believing you can get better with practice and effort",["You're either good or bad at things","Never trying new things"],"Your brain grows when you practice something hard."],
+  ["Someone is being bullied. What should you do?","Tell a trusted adult and be kind to the person",["Join in","Ignore it"],"Speaking up can make a big difference."],
+  ["What is empathy?","Understanding how someone else feels",["Only caring about yourself","Being really good at sports"],"Empathy helps us be better friends and teammates."],
+  ["How does exercise affect your mood?","It can make you feel happier and calmer",["It always makes you grumpy","It has no effect"],"Physical activity releases chemicals that boost your mood."],
+  ["Which is an example of positive self-talk?","'I can do hard things.'",["'I'm never good at anything.'","'Why even try?'"],"How you talk to yourself matters."]],
+ g68:[
+  ["What is an emotional trigger?","Something that causes a strong emotional reaction",["A part of a gun","A type of exercise"],"Knowing your triggers helps you plan how to respond."],
+  ["Which could be a sign someone needs help with their mental health?","Pulling away from friends and activities they used to enjoy",["Laughing at a joke","Trying a new sport"],"If you notice this in yourself or a friend, talk to a trusted adult."],
+  ["How should you handle cyberbullying?","Don't respond, save evidence, and tell a trusted adult",["Post something mean back","Keep it a secret"],"Adults can help stop it."],
+  ["What do healthy friendships include?","Respect, trust, and support",["Pressure and control","Keeping secrets that hurt you"],"Good friends make you feel safe and valued."],
+  ["Which coping strategy is healthy?","Journaling or going for a walk",["Bottling feelings up","Lashing out at others"],"Healthy coping helps you process feelings."],
+  ["Regular physical activity can help reduce...","Stress and anxiety",["Happiness","Sleep quality"],"Movement is one of the best tools for managing stress."]],
+ g912:[
+  ["In the U.S., what number can you call or text if you or a friend is in crisis?","988",["411","311"],"988 reaches the Suicide & Crisis Lifeline any time, day or night. You can also tell a trusted adult."],
+  ["What is resilience?","The ability to bounce back from challenges",["Never feeling stressed","Avoiding problems"],"Resilience can be built with practice and support."],
+  ["How can chronic stress affect the body?","It can weaken the immune system and disrupt sleep",["It makes you stronger every time","It has no effect"],"Managing stress protects both mental and physical health."],
+  ["Which is an example of an I-message?","'I feel frustrated when plans change last minute.'",["'You always ruin everything.'","'You never listen.'"],"I-messages express feelings without blaming."],
+  ["Which is a warning sign of an unhealthy relationship?","Someone controlling who you talk to or checking your phone",["Respecting your boundaries","Supporting your goals"],"Healthy relationships respect independence."],
+  ["What is mindfulness?","Paying attention to the present moment without judgment",["Thinking about the future constantly","Ignoring feelings"],"Mindfulness can lower stress and improve focus."]]
+}},
+{ id:"safety", cat:"Health", icon:"⛑️", name:"Safety & First Aid", q:{
+ k2:[
+  ["What number do you call in an emergency?","911",["123","411"],"Call 911 when someone is badly hurt or in danger."],
+  ["What should you do before crossing the street?","Look left, right, and left again",["Run across fast","Close your eyes"],"Always cross with an adult and look both ways."],
+  ["What should you wear when you ride a bike?","A helmet",["Sandals","A hat"],"Helmets protect your brain."],
+  ["If your clothes catch on fire, what do you do?","Stop, drop, and roll",["Run","Hide"],"Rolling puts out the flames."],
+  ["During a fire drill, what do you do?","Walk quietly to the exit with your class",["Run and scream","Hide under a desk"],"Staying calm and quiet helps everyone hear directions."],
+  ["You find pills or medicine. What should you do?","Don't touch it and tell an adult",["Taste it","Give it to a friend"],"Medicine can be dangerous if it isn't meant for you."]],
+ g35:[
+  ["What should you do first with a small cut?","Clean it with soap and water",["Ignore it","Rub dirt on it"],"Cleaning helps prevent infection."],
+  ["What should you do for a bloody nose?","Lean forward and pinch the soft part of your nose",["Tilt your head back","Lie down flat"],"Leaning forward keeps blood from going down your throat."],
+  ["For a sprain, what does RICE stand for?","Rest, Ice, Compression, Elevation",["Run, Ice, Clean, Exercise","Rest, Itch, Cover, Eat"],"RICE helps reduce swelling and pain."],
+  ["A stranger online asks for your address. What should you do?","Don't share it and tell a trusted adult",["Share it","Send a photo of your house"],"Never share personal information online."],
+  ["Why wear a seatbelt?","It keeps you in place and protects you in a crash",["It's comfy","It's only for adults"],"Seatbelts save lives."],
+  ["Where should kids under 13 sit in a car?","In the back seat",["In the front seat","Standing up"],"The back seat is the safest place for kids."]],
+ g68:[
+  ["What should you do for a minor burn?","Cool it under running water",["Put ice directly on it","Cover it with butter"],"Cool running water for several minutes helps stop the burn."],
+  ["How do you stop bleeding from a cut?","Apply firm, direct pressure with a clean cloth",["Blow on it","Leave it uncovered"],"Direct pressure is the first step."],
+  ["What is the universal sign for choking?","Hands clutched at the throat",["Waving both arms","Thumbs up"],"If someone can't speak or cough, get help right away."],
+  ["What should you do before helping an injured person?","Check that the scene is safe",["Move them right away","Take a picture"],"You can't help if you get hurt too."],
+  ["Which can be signs of a concussion?","Headache, dizziness, and confusion after a hit to the head",["Feeling hungry","A runny nose"],"Concussions are brain injuries and need an adult's attention."],
+  ["What should you do after a hit to the head in sports?","Stop playing and tell a coach or adult",["Keep playing","Hide it"],"Returning too soon can make a concussion worse."]],
+ g912:[
+  ["At what rate should hands-only CPR compressions be given?","100–120 per minute",["30 per minute","200 per minute"],"That's about the beat of 'Stayin' Alive.'"],
+  ["About how deep should chest compressions be for an adult?","At least 2 inches",["Half an inch","6 inches"],"Push hard and fast in the center of the chest."],
+  ["What is an AED used for?","Delivering a shock to restore a normal heart rhythm",["Measuring blood pressure","Treating burns"],"AEDs give spoken directions anyone can follow."],
+  ["Which can be signs of a heart attack?","Chest pain or pressure and shortness of breath",["A sore throat","An itchy arm"],"Call 911 right away."],
+  ["Which are signs of heat stroke?","Very high body temperature and confusion",["Feeling a little warm","Mild thirst"],"Heat stroke is a medical emergency. Call 911."],
+  ["What do Good Samaritan laws generally do?","Protect people who help in an emergency in good faith",["Require payment for help","Ban bystanders from helping"],"Details vary by state, but the idea is to encourage helping."]]
+}},
+{ id:"substance", cat:"Health", icon:"🚭", name:"Medicine & Substance Safety", q:{
+ k2:[
+  ["Who should give you medicine?","A trusted adult, like a parent or the nurse",["A friend","Anyone"],"Only take medicine from a trusted adult."],
+  ["Some medicine looks like candy. What should you do?","Only take it from a trusted adult",["Eat it","Share it"],"Medicine is not candy."],
+  ["Cigarette smoke is...","Bad for your lungs",["Good for you","Like fresh air"],"Clean air keeps your lungs healthy."],
+  ["Which helps your body stay healthy?","Sleep, water, and healthy food",["Smoking","Taking someone else's medicine"],"Healthy habits help you grow strong."],
+  ["Who should use cleaning products under the sink?","Only adults",["Kids","Pets"],"Cleaning products can be poisonous."],
+  ["Saying no to something unsafe is...","Brave and smart",["Rude","Silly"],"It's always okay to say no to unsafe things."]],
+ g35:[
+  ["Nicotine, found in cigarettes and vapes, is...","Addictive",["A vitamin","Healthy"],"Addictive means it's very hard to stop once you start."],
+  ["What is secondhand smoke?","Smoke you breathe in from someone else's cigarette",["A type of fog","Steam from a shower"],"Secondhand smoke can hurt people nearby."],
+  ["Why are vapes harmful?","They contain nicotine and chemicals that can harm your lungs",["They're just water","They're safe for kids"],"Vapes are not harmless water vapor."],
+  ["Is it safe to take someone else's prescription medicine?","No, it's unsafe",["Yes, if they're a friend","Yes, if it's a small amount"],"Prescriptions are made for one specific person."],
+  ["What's a good way to refuse something unsafe?","Say 'No thanks' and walk away",["Say maybe","Try it once"],"Clear, confident refusals work best."],
+  ["If someone may have swallowed poison, what can adults call?","Poison Control at 1-800-222-1222",["The pizza place","A friend"],"Poison Control experts are available 24/7."]],
+ g68:[
+  ["How can nicotine affect the teen brain?","It can harm attention, learning, and impulse control",["It improves focus","It has no effect"],"The teen brain is still developing, which makes it more sensitive to nicotine."],
+  ["Which is a refusal skill?","Suggesting a different activity",["Giving in to fit in","Staying silent"],"Offering an alternative gives everyone a way out."],
+  ["Peer pressure can be...","Positive or negative",["Only negative","Only positive"],"Friends can push you toward good choices too."],
+  ["What kind of drug is alcohol?","A depressant that slows the brain and body",["A stimulant that speeds you up","A vitamin"],"Alcohol slows reaction time and affects judgment."],
+  ["When is over-the-counter medicine safest?","When taken exactly as the label directs",["When you take extra","When mixed with other medicines"],"Always follow the label or a doctor's directions."],
+  ["What does addiction mean?","Being unable to stop using a substance even when it causes harm",["Liking a hobby","Being tired"],"Addiction changes how the brain works."]],
+ g912:[
+  ["Why is mixing alcohol with opioids dangerous?","It can slow breathing to a deadly level",["It cancels them out","It's safe in small amounts"],"Combining depressants multiplies the risk."],
+  ["What is naloxone (Narcan) used for?","Reversing an opioid overdose",["Treating headaches","Boosting energy"],"Naloxone can save a life. Call 911 too."],
+  ["Why is fentanyl so dangerous?","A tiny amount can be deadly, and it's often hidden in other drugs",["It's always labeled","It's weak"],"Counterfeit pills often contain fentanyl."],
+  ["What affects blood alcohol concentration (BAC)?","Body size, amount consumed, and time",["Only the brand of drink","Shoe size"],"BAC rises faster than many people expect."],
+  ["Which are signs of an opioid overdose?","Slow or stopped breathing and pinpoint pupils",["Excitement","Fast breathing"],"Call 911 immediately."],
+  ["What is the legal drinking age in the United States?","21",["16","18"],"It's 21 in all 50 states."]]
+}}
+];
+
+UNITS.push(
+{ id:"dance", cat:"PE", icon:"🤸", name:"Dance, Rhythm & Gymnastics", q:{
+ k2:[
+  ["What is the beat in music?","The steady pulse you can clap to",["The words of a song","How loud the music is"],"Clapping or stepping to the beat helps you move in rhythm."],
+  ["When you balance on one foot, what helps you stay steady?","Look at one spot and hold your arms out",["Close your eyes and spin","Wiggle your whole body"],"A focus spot and wide arms help you stay balanced."],
+  ["What's the safe way to do a log roll?","Keep your body long and straight and roll sideways",["Roll on your head","Roll off a table"],"Log rolls stay low on the mat with your body stretched long like a pencil."],
+  ["Copying your partner's moves like a mirror is called...","Mirroring",["Racing","Hiding"],"Mirroring means you move exactly how your partner moves, at the same time."],
+  ["In a three-point balance, how many body parts touch the floor?","Three",["One","Ten"],"Try two hands and one foot, or two feet and one hand."],
+  ["In freeze dance, what do you do when the music stops?","Freeze in a shape",["Keep dancing","Run away"],"Freezing shows control and good listening."]],
+ g35:[
+  ["What is tempo?","How fast or slow the music is",["How loud it is","Who is singing"],"Fast tempo means quick moves. Slow tempo means slow moves."],
+  ["What is a weight transfer in gymnastics?","Moving your body weight from one body part to another",["Lifting weights","Standing still"],"Rocking, rolling, and cartwheels all transfer weight."],
+  ["Before a forward roll, where should your chin be?","Tucked to your chest",["Pointed up","Touching the mat first"],"A tucked chin protects your head and neck."],
+  ["Which shows a strong balance?","Holding still with tight muscles for 3 seconds",["Wobbling and falling","Holding for less than a second"],"Tight muscles and a focus point make balances steady."],
+  ["A set of dance moves done in order is called a...","Sequence",["Penalty","Timeout"],"Putting moves in order turns them into a dance sequence."],
+  ["What are folk dances?","Traditional dances passed down in a culture or community",["Dances made up only for TV","Strength exercises"],"Folk dances help us learn about people and cultures around the world."]],
+ g68:[
+  ["Dance steps are usually counted in groups of...","8",["3","20"],"Dancers count in 8s: 5, 6, 7, 8 is the start signal."],
+  ["What is choreography?","Planning and arranging movements into a dance",["Stretching after class","Keeping score"],"Choreographers design the steps, formations, and timing of a dance."],
+  ["In gymnastics, a wide base of support helps with...","Stability",["Speed","Flexibility"],"A wider base makes it harder to tip over."],
+  ["Which dance element describes where you move, like levels, pathways, and directions?","Space",["Time","Energy"],"The elements of dance are body, energy, space, and time."],
+  ["What is a counterbalance?","Partners lean away from each other and use each other's weight to stay balanced",["Balancing alone on one foot","Falling on purpose"],"Counterbalances need trust and matching force from both partners."],
+  ["Why is dance a good lifetime activity?","It builds fitness and can be enjoyed at any age",["It only works for kids","It doesn't count as exercise"],"Social, line, and cultural dance keep people active for life."]],
+ g912:[
+  ["What do the letters in BEST stand for as elements of dance?","Body, Energy, Space, Time",["Balance, Endurance, Speed, Tempo","Beat, Energy, Step, Turn"],"BEST is a common way to remember the four elements of dance."],
+  ["What is syncopation?","Accenting a beat that's normally weak or off-beat",["Dancing perfectly on every beat","Stopping the music"],"Syncopation adds surprise and style to rhythm."],
+  ["Sustained aerobic or social dance mainly builds...","Cardiorespiratory endurance",["Only flexibility","Body temperature"],"Continuous dancing keeps your heart rate up the way jogging does."],
+  ["A cartwheel is an example of...","Rotation with weight transfer from hands to feet",["A static balance","A jump"],"Cartwheels rotate your body sideways while weight moves hand, hand, foot, foot."],
+  ["Why do dancers and gymnasts spot a fixed point when turning?","To stay oriented and reduce dizziness",["To look at the judges","To slow down"],"Spotting keeps your eyes and balance system steady during turns."],
+  ["What is canon in choreography?","Dancers perform the same movement starting at different times",["Everyone moves in unison","A solo dance"],"Canon creates a ripple effect, like a round in music."]]
+}},
+{ id:"testing", cat:"PE", icon:"📊", name:"Fitness Testing & Goals", q:{
+ k2:[
+  ["Why do we check our fitness?","To see how our bodies get stronger over time",["To see who's the best","To win a prize"],"Fitness checks compare you to you, not to your friends."],
+  ["A pedometer counts your...","Steps",["Heartbeats","Friends"],"A pedometer clips on and counts every step you take."],
+  ["What is a goal?","Something you want to get better at and work toward",["Something you already finished","A type of snack"],"Goals help you practice and improve."],
+  ["Which is a good fitness goal?","I will jump rope 10 more times than last week",["I will never exercise","I will be faster than everyone"],"Good goals are about beating your own best."],
+  ["After running, where can you feel your heartbeat?","On your chest or wrist",["On your elbow","On your hair"],"Your heart beats faster after you move."],
+  ["In the PACER, you run back and forth to...","Beeps",["Only music","A whistle every minute"],"Each beep tells you when to reach the other line."]],
+ g35:[
+  ["What does the curl-up test measure?","Core strength and endurance",["Flexibility","Speed"],"Curl-ups check how well your stomach muscles keep working."],
+  ["The back-saver sit and reach tests one leg at a time for...","Flexibility in the back of the legs",["Arm strength","Heart health"],"Keeping one knee bent protects your lower back during the test."],
+  ["What does the trunk lift test measure?","Back strength and flexibility",["Leg speed","Balance on one foot"],"Lifting slowly and with control protects your back."],
+  ["In the cadence push-up test, you keep pace with...","A steady beat",["Your friend","The fastest person"],"The cadence keeps every push-up the same speed."],
+  ["In a SMART goal, what does S stand for?","Specific",["Super","Speed"],"SMART goals are Specific, Measurable, Attainable, Realistic, and Timely."],
+  ["What is the Healthy Fitness Zone?","A score range that shows healthy fitness for your age",["A place in the gym","The top 10 students"],"Everyone can reach their Healthy Fitness Zone."]],
+ g68:[
+  ["What is a criterion-referenced fitness test?","One that compares you to a health standard, not to other students",["One that ranks the class","One graded on effort only"],"FitnessGram uses health standards, so everyone can succeed."],
+  ["Which tool shows exercise intensity in real time?","A heart rate monitor",["A tape measure","A calendar"],"Heart rate monitors show how hard your heart is working right now."],
+  ["In a SMART goal, what does M stand for?","Measurable",["Mighty","Maximum"],"Measurable means you can track your progress with numbers."],
+  ["Which is the best SMART goal?","I'll add 5 PACER laps in six weeks by jogging 3 days a week",["I want to be fit","I'll run more sometime"],"It's specific, measurable, and has a timeline."],
+  ["What does an accelerometer, like in a fitness watch, measure?","Movement and activity levels",["Body temperature","Blood type"],"Accelerometers sense motion to estimate how active you are."],
+  ["Why retest fitness later in the year?","To track progress toward your goals",["To punish low scores","It isn't useful"],"Pre- and post-tests show how your training worked."]],
+ g912:[
+  ["Which FitnessGram test measures aerobic capacity?","PACER",["Trunk lift","Back-saver sit and reach"],"The PACER estimates how well your heart and lungs deliver oxygen."],
+  ["When is the best time to measure resting heart rate?","Right after waking up, before getting out of bed",["Right after a workout","After drinking coffee"],"That's when your body is most at rest."],
+  ["What should a personal fitness plan include?","Goals, FITT details, a timeline, and a way to track progress",["Only a list of sports","Just a start date"],"A complete plan tells you what, when, how hard, and how you'll measure it."],
+  ["Which is an example of fitness self-assessment?","Comparing your scores to your own past results",["Comparing yourself to pro athletes","Guessing without testing"],"Self-assessment focuses on your own growth."],
+  ["You've stopped improving on a goal. What's a good adjustment?","Change one FITT variable, like intensity or type",["Quit the goal","Do the exact same workout forever"],"Small changes create new challenges for your body."],
+  ["In a SMART goal, what does R stand for?","Realistic",["Rapid","Repeat"],"Realistic goals stretch you but are still reachable."]]
+}},
+{ id:"active", cat:"PE", icon:"🚴", name:"Active Lifestyle", q:{
+ k2:[
+  ["Which is a way to be active at home?","Dancing, playing tag, or riding a bike",["Watching TV all day","Sitting and playing video games"],"Moving your body at home counts too."],
+  ["What's an activity you can do with your family?","Going for a walk together",["Napping all afternoon","Watching a movie"],"Family walks, bike rides, and games keep everyone healthy."],
+  ["How does being active help you?","You feel happy and stay healthy",["It makes you sick","It makes you sleepy all day"],"Moving helps your body and your mood."],
+  ["Where can you play outside safely?","A park or playground with an adult nearby",["In the street","Alone near a pond"],"Safe places and grown-ups nearby keep play fun."],
+  ["You've been sitting a long time. What should you do?","Get up and move around",["Keep sitting","Fall asleep"],"Short movement breaks wake up your body and brain."],
+  ["Which toy helps you be active?","A jump rope",["A puzzle","A coloring book"],"Jump ropes, balls, and hoops get you moving."]],
+ g35:[
+  ["Which is a physical activity outside of school?","Joining a rec soccer team or going swimming",["Doing homework","Watching sports on TV"],"Clubs, teams, and family activities keep you active beyond P.E."],
+  ["How can you add more activity to your day?","Walk or bike instead of riding in a car, when it's safe",["Take the elevator every time","Stay inside at recess"],"Small choices add up to big activity."],
+  ["What's a community resource for staying active?","Parks, trails, and recreation centers",["A movie theater","A drive-thru"],"Many communities have free places to play and exercise."],
+  ["Why find activities you enjoy?","You're more likely to keep doing them",["It doesn't matter","So you can quit sooner"],"Fun activities become lifelong habits."],
+  ["What should sitting-still screen time be balanced with?","Active time",["More screen time","Snacks"],"Balance screens with play, sports, and movement."],
+  ["Which is an active chore?","Raking leaves",["Watching TV","Playing a phone game"],"Chores like raking, sweeping, and gardening get you moving."]],
+ g68:[
+  ["What does sedentary mean?","Sitting or lying down with very little movement",["Running fast","Lifting weights"],"Too much sedentary time is linked to health problems."],
+  ["Which is a lifetime activity?","Hiking or cycling",["Recess tag","Dodgeball tournaments"],"Lifetime activities are easy to keep doing as an adult."],
+  ["What is energy balance?","Calories eaten compared with calories used",["Balancing on one foot","Sleeping 8 hours"],"Food gives energy, and activity uses it."],
+  ["Lack of time is a common barrier to activity. What's a good solution?","Fit in short 10-minute bursts of activity",["Give up on exercise","Only exercise once a month"],"Short bouts throughout the day add up."],
+  ["What are outdoor pursuits?","Activities like hiking, kayaking, and orienteering",["Indoor video games","Reading outside"],"Outdoor pursuits build fitness and confidence in nature."],
+  ["Why track your activity in a log or app?","To see patterns and stay motivated",["To compare with influencers","It's required by law"],"Tracking helps you notice progress."]],
+ g912:[
+  ["What does energy balance mean?","Energy taken in from food roughly equals energy used",["Eating nothing","Only exercising"],"Balance supports a healthy weight and plenty of energy."],
+  ["If energy intake is regularly more than energy used, the body tends to...","Gain weight over time",["Get faster","Need less sleep"],"Energy balance is about long-term patterns, not single meals."],
+  ["What's a good way to stay active after high school?","Choose activities you enjoy and can access, like a gym, league, or trail",["Stop once school ends","Only exercise before events"],"Access and enjoyment keep adults active."],
+  ["Teens should do muscle-strengthening activity at least how many days a week?","3",["1","7"],"This is part of the recommended 60 minutes a day."],
+  ["What most helps adults stick with exercise?","Enjoyment and social support",["Expensive equipment","Extreme workouts"],"People keep doing activities they like, with people they like."],
+  ["What is active transportation?","Walking or biking to get places",["Driving fast","Taking a taxi"],"Active transportation builds fitness into daily life."]]
+}},
+{ id:"habits", cat:"Health", icon:"😴", name:"Healthy Habits: Sleep, Screens & Checkups", q:{
+ k2:[
+  ["About how much sleep do kids need each night?","About 10–11 hours",["2 hours","20 hours"],"Sleep helps your body grow and your brain learn."],
+  ["What helps you fall asleep?","A calm bedtime routine, like reading a book",["Playing video games in bed","Eating candy"],"Quiet, calm activities help your body get ready for sleep."],
+  ["Who helps keep you healthy?","Doctors, nurses, dentists, and parents",["Only your friends","No one"],"Lots of grown-ups help keep kids healthy."],
+  ["Why do you visit the dentist?","To keep your teeth healthy",["To get candy","To play games"],"Dentists clean and check your teeth."],
+  ["What's a good thing to do before bed?","Brush your teeth",["Eat a big snack","Watch scary videos"],"Brushing before bed keeps germs off your teeth all night."],
+  ["When should screens be turned off?","Before bedtime",["Never","In the middle of the night"],"Turning off screens helps you fall asleep."]],
+ g35:[
+  ["Why can screens before bed make it hard to sleep?","The bright light keeps your brain awake",["Screens make you hungry","They don't affect sleep"],"Try turning screens off an hour before bed."],
+  ["What is a regular checkup?","A doctor visit to make sure you're healthy, even when you're not sick",["A visit only when you're hurt","A school test"],"Checkups catch problems early."],
+  ["Which is a healthy screen-time habit?","Taking breaks to move and rest your eyes",["Staring at a screen for hours","Using screens during meals"],"Movement breaks help your eyes and body."],
+  ["Why does going to bed at the same time each night help?","It keeps your body on a steady sleep schedule",["It makes you taller","It doesn't matter"],"A steady schedule makes falling asleep easier."],
+  ["What does good posture look like when using a device?","Sitting up straight with the screen at eye level",["Hunching over your lap","Lying on your stomach"],"Good posture protects your neck and back."],
+  ["How does sleep help you in school?","It helps you focus, remember, and learn",["It doesn't help","It makes you forget things"],"Your brain stores what you learned while you sleep."]],
+ g68:[
+  ["What is the body's natural 24-hour sleep-wake cycle called?","Circadian rhythm",["Heart rate","Metabolism"],"Light and routine help set your circadian rhythm."],
+  ["Which habit improves sleep quality?","Keeping the bedroom dark, quiet, and cool",["Sleeping with the TV on","Drinking soda at night"],"A dark, quiet, cool room signals your body to rest."],
+  ["Too much sedentary screen time is linked to...","Less physical activity and poorer sleep",["Better fitness","Stronger bones"],"Balancing screens with movement protects your health."],
+  ["Why get vision and hearing screenings?","To catch problems early",["They're only for adults","To pick glasses colors"],"Early care helps you learn and stay safe."],
+  ["Which is a sign of not getting enough sleep?","Trouble concentrating and irritability",["Having too much energy","Better grades"],"Teens need 8–10 hours to feel and focus their best."],
+  ["Why keep earbud volume low?","Loud sound over time can damage hearing",["It saves battery","Songs sound worse loud"],"If others can hear your music, it's probably too loud."]],
+ g912:[
+  ["How does teens' natural sleep timing tend to shift?","Later, which makes early mornings harder",["Earlier","It stops changing"],"Planning a consistent bedtime helps work with this shift."],
+  ["Which is part of good sleep hygiene?","Avoiding caffeine in the afternoon and evening",["Napping for hours after school","Scrolling in bed"],"Caffeine can stay in your system for hours."],
+  ["What is preventive care?","Health care that helps prevent illness, like checkups and vaccines",["Only emergency care","Surgery"],"Preventing problems is easier than treating them."],
+  ["How can blue light from screens at night affect sleep?","It can delay the release of melatonin",["It makes you sleep instantly","It has no effect"],"Melatonin is the hormone that helps you feel sleepy."],
+  ["How can doomscrolling affect your health?","It can increase stress and cut into sleep",["It improves mood","It builds focus"],"Setting app limits can protect your time and mood."],
+  ["Which is a SMART goal for better sleep?","I'll put my phone away by 10 p.m. on school nights for 3 weeks",["I'll sleep better someday","I'll try to be less tired"],"Specific, measurable, and time-bound goals are easier to keep."]]
+}},
+{ id:"violence", cat:"Health", icon:"🛡️", name:"Violence & Bullying Prevention", q:{
+ k2:[
+  ["What is bullying?","Hurting or teasing someone on purpose, again and again",["Playing a fair game","Saying good morning"],"Bullying is on purpose and happens more than once."],
+  ["If someone keeps being mean to you, what should you do?","Tell a trusted adult",["Keep it a secret","Be mean back"],"Trusted adults can help make it stop."],
+  ["What's a safe way to solve a problem with a friend?","Use your words and take turns talking",["Push them","Yell"],"Calm words solve problems better than hands."],
+  ["If someone touches you in a way that feels unsafe, what should you do?","Say no, get away, and tell a trusted adult",["Keep it a secret","Do nothing"],"You can always tell a trusted adult, and it's never your fault."],
+  ["When you feel angry, is it okay to hit?","No, use calm words instead",["Yes, if you're really mad","Only at home"],"Take a breath and use your words."],
+  ["What can you do if you see someone being bullied?","Tell an adult and be kind to them",["Laugh","Join in"],"Helping others makes school safe for everyone."]],
+ g35:[
+  ["What's the difference between teasing and bullying?","Bullying is repeated and meant to hurt",["There's no difference","Teasing is always bullying"],"When teasing is repeated and hurtful, it becomes bullying."],
+  ["What is an upstander?","Someone who safely speaks up or gets help when someone is treated badly",["Someone who watches and laughs","Someone who stands on a chair"],"Upstanders make it harder for bullying to continue."],
+  ["What is cyberbullying?","Bullying that happens online or through texts",["A computer virus","A video game"],"Save the messages and tell a trusted adult."],
+  ["Which is a peaceful way to resolve conflict?","Calmly talk it out and look for a compromise",["Fight it out","Spread rumors"],"Listening to both sides helps find a fair solution."],
+  ["If a situation feels unsafe, who should you tell?","A trusted adult",["No one","Only a friend"],"Trusted adults like parents, teachers, and counselors can help."],
+  ["Which is an example of showing respect?","Treating others the way you want to be treated",["Ignoring people you don't know","Making fun of differences"],"Respect makes everyone feel safe and included."]],
+ g68:[
+  ["What is a bystander?","Someone who sees bullying but isn't directly involved",["The person bullying","The principal"],"Bystanders can choose to become upstanders."],
+  ["Which is a de-escalation strategy?","Stay calm, use a low voice, and walk away",["Yell louder","Get in their face"],"Calm responses help keep conflicts from growing."],
+  ["Harassment because of someone's race, religion, or disability should be...","Reported",["Ignored","Joined"],"Every student has the right to feel safe at school."],
+  ["Which is a sign of a healthy relationship?","Respecting each other's boundaries",["Checking each other's phones","Constant jealousy"],"Healthy relationships are built on respect and trust."],
+  ["You see a threat of violence posted online. What should you do?","Tell a trusted adult or school staff right away",["Share it with friends","Ignore it"],"Reporting threats can prevent someone from getting hurt."],
+  ["How do gangs often recruit young people?","By offering belonging, protection, or money",["By posting job listings","Through school clubs"],"Positive clubs, teams, and mentors meet the same needs safely."]],
+ g912:[
+  ["What is hazing?","Forcing someone to do something harmful or humiliating to join a group",["A team tradition like a pep rally","A tryout"],"Hazing can cause serious harm and can be a crime in Virginia."],
+  ["If someone says they're okay with being hazed, is it still hazing?","Yes. Pressure to go along means it isn't truly a free choice",["No, then it's fine","Only if an adult is there"],"Groups can build bonds in ways that don't hurt anyone."],
+  ["Which is a warning sign of dating violence?","Extreme jealousy and controlling who you see",["Supporting your goals","Respecting your time with friends"],"Control is a major red flag in any relationship."],
+  ["In a healthy relationship, personal boundaries should be...","Respected, and either person can change them",["Ignored","Decided by one person"],"Respecting boundaries is part of every healthy relationship."],
+  ["Which is a protective factor against violence?","Strong connections to family, school, and community",["Isolation","Easy access to weapons"],"Supportive relationships lower the risk of violence."],
+  ["What do restorative practices focus on?","Repairing harm and rebuilding relationships",["Only punishment","Ignoring the problem"],"Restorative approaches help people take responsibility and make things right."]]
+}},
+{ id:"community", cat:"Health", icon:"🌎", name:"Community & Environmental Health", q:{
+ k2:[
+  ["How can you help keep your school clean?","Throw trash in the trash can",["Drop it on the floor","Hide it"],"A clean school is a healthier school."],
+  ["What does recycling help?","Keep the Earth clean",["Make more trash","Nothing"],"Recycling turns old things into new things."],
+  ["Which community helpers keep us healthy?","Doctors, nurses, and firefighters",["Only cartoon characters","No one"],"Many people in our community help keep us safe and healthy."],
+  ["Why turn off the water while you brush your teeth?","To save water",["To make teeth cleaner","It's fun"],"Clean water is precious, so don't waste it."],
+  ["Why wear sunscreen outside?","To protect your skin from the sun",["To stay cold","To smell nice"],"Sunscreen helps prevent sunburn."],
+  ["What can very loud noise hurt?","Your ears",["Your elbows","Your hair"],"Cover your ears or move away from loud sounds."]],
+ g35:[
+  ["How can you tell if health information is reliable?","It comes from a trusted source like a doctor, nurse, or .gov website",["It's in a funny video","A friend said so"],"Ask a trusted adult to help you check health information."],
+  ["Air pollution can make it harder to...","Breathe, especially for people with asthma",["See colors","Taste food"],"Clean air helps everyone breathe easier."],
+  ["Which helps the environment?","Reusing and recycling",["Littering","Leaving lights on"],"Small habits add up to a healthier planet."],
+  ["Which community place helps people stay healthy?","A health clinic or recreation center",["A candy store","A parking lot"],"Clinics, parks, and rec centers support community health."],
+  ["Why is clean water important?","Dirty water can spread germs and make people sick",["It tastes the same","It isn't important"],"Communities work hard to keep drinking water safe."],
+  ["What's one way to be a health advocate?","Encourage friends to make healthy choices",["Keep healthy tips to yourself","Pressure friends to skip P.E."],"Advocates help others be healthy too."]],
+ g68:[
+  ["Which source is most reliable for health information?","The CDC or a doctor's office website",["A social media influencer","An ad for supplements"],"Look for sources backed by science and experts."],
+  ["What does the Air Quality Index (AQI) tell you?","How clean or polluted the air is",["The weather temperature","How windy it is"],"Higher AQI numbers mean more pollution."],
+  ["On a high-AQI day, what should people with asthma do?","Limit hard outdoor activity",["Run a marathon outside","Nothing different"],"Moving workouts indoors protects your lungs."],
+  ["What does a public health department do?","Works to prevent disease and protect community health",["Builds roads","Runs sports teams"],"Health departments track disease, inspect restaurants, and more."],
+  ["Which is a health advocacy action?","Starting a campaign to add water bottle filling stations",["Complaining without acting","Ignoring the issue"],"Advocacy means taking action to improve health for others."],
+  ["Which is a health career?","Athletic trainer",["Accountant","Airline pilot"],"Athletic trainers prevent and treat sports injuries."]],
+ g912:[
+  ["Which question helps evaluate a health claim online?","Who wrote it, and is it backed by research?",["How many likes does it have?","Is the video funny?"],"Check the author, evidence, and date."],
+  ["Why is carbon monoxide so dangerous?","It's colorless and odorless",["It smells terrible","It's always visible"],"Carbon monoxide detectors are the only way to know it's there."],
+  ["Which is an environmental health risk?","Lead in old paint or pipes",["Fresh air","Planting trees"],"Lead exposure can harm the brain and nervous system."],
+  ["What is health literacy?","Being able to find, understand, and use health information to make decisions",["Reading health books for fun","Knowing medical words only"],"Health literacy helps you make informed choices."],
+  ["Which choice reduces vehicle air pollution?","Walking, biking, carpooling, or public transit",["Idling the car for a long time","Driving alone everywhere"],"Fewer car trips mean cleaner air."],
+  ["Which health career requires a state license?","Physical therapist",["Fitness influencer","Personal blogger"],"Licensed health professionals have specialized training and must meet state standards."]]
+}}
+);
+
+const MORE = {
+rules:{
+ k2:[["Where should equipment go when you're done?","Back where it belongs",["On the floor","In your backpack"],"Putting equipment away keeps the gym safe and ready."],["How should you move in a crowded gym?","Carefully, watching for others",["Fast with your eyes closed","Backward without looking"],"Watching where you go keeps everyone safe."],["What should you do if you get hurt in P.E.?","Tell the teacher right away",["Hide it","Keep playing"],"Your teacher can help you feel better."],["What does it mean to play fair?","Follow the rules and take turns",["Cheat to win","Only let friends play"],"Playing fair makes the game fun for everyone."]],
+ g35:[["Why do we have a freeze signal in the gym?","So everyone can stop safely and listen",["To end class","It's just for fun"],"A quick freeze prevents collisions and saves time."],["You break a rule by accident. What should you do?","Admit it and fix it",["Blame someone else","Pretend it didn't happen"],"Owning mistakes builds trust with teammates."],["What's the safest way to move a heavy mat?","Bend your knees, lift with your legs, and get a partner",["Bend at the waist and yank it","Drag it with one hand"],"Lifting with your legs protects your back."],["How should winners act after a game?","Say 'good game' and be humble",["Brag to the other team","Laugh at the losers"],"Good winners respect the other team's effort."]],
+ g68:[["Why is wearing jewelry unsafe in active games?","It can catch on things or hurt someone",["It slows you down","It's a fashion rule"],"Removing jewelry prevents cuts and scratches."],["What is gamesmanship?","Bending rules or using tricks to get an unfair edge",["Being a great teammate","Following every rule"],"Sportsmanship earns respect; gamesmanship loses it."],["Why check your surroundings before an activity?","To make sure you have space and no hazards nearby",["To find your friends","To look for the exit"],"A quick scan prevents collisions and trips."],["How should you respond if a teammate cheats?","Remind them of the rules or tell the teacher",["Cheat too","Ignore it"],"Speaking up keeps the game fair."]],
+ g912:[["What is the purpose of a dynamic warm-up?","To raise body temperature and prepare muscles with movement",["To hold long stretches before sprinting","To rest before class"],"Movement-based warm-ups prepare muscles for activity."],["Why should athletes report concussion symptoms right away?","Playing with a concussion risks more serious brain injury",["It gets them out of practice","Symptoms always go away quickly"],"Stopping early protects the brain while it heals."],["Which best shows integrity when players self-officiate?","Calling your own foul even when no one else saw it",["Only calling fouls on opponents","Waiting to see if anyone noticed"],"Integrity means being honest when no one is watching."],["How can a team captain create a positive climate?","Encourage effort, include everyone, and model respect",["Only praise the best players","Yell at mistakes"],"Leaders set the tone for the whole team."]]},
+coop:{
+ k2:[["Your partner drops the ball. What do you say?","That's okay, try again!",["Ha ha!","Give me that!"],"Kind words help your partner keep trying."],["How can you share equipment?","Take turns using it",["Keep it all to yourself","Throw it away"],"Sharing lets everyone play."],["What does a good listener do?","Looks at the person talking",["Talks at the same time","Walks away"],"Looking and listening shows respect."],["How can your team finish a job faster?","Everyone helps",["One person does it all","Nobody helps"],"Many hands make work easier."]],
+ g35:[["What should a team do before starting a challenge?","Make a plan together",["Just start running","Argue about it"],"Planning first saves time and mistakes."],["How can you include a quiet teammate?","Ask for their idea",["Ignore them","Tell them to sit out"],"Everyone has good ideas to share."],["Your team's plan isn't working. What should you do?","Talk about it and try a new plan",["Quit","Blame one person"],"Good teams adjust their plans."],["What's a good way to celebrate a team success?","High fives and thanking teammates",["Bragging to other teams","Taking all the credit"],"Sharing credit builds team spirit."]],
+ g68:[["What is consensus?","A decision everyone can agree to support",["The loudest person decides","A vote with one winner"],"Consensus helps everyone commit to the plan."],["What helps a team resolve a disagreement?","Listen to each side, then find a solution together",["Let the strongest player decide","Stop playing"],"Fair solutions keep teams working together."],["Why rotate roles during team challenges?","So everyone practices different skills",["To confuse the team","It doesn't matter"],"Rotating roles builds a stronger, more flexible team."],["What makes feedback helpful?","It's specific, kind, and about actions",["It's vague and harsh","It's about someone's personality"],"Helpful feedback tells people exactly what to try next."]],
+ g912:[["What happens in the norming stage of a team?","Members agree on roles and ways of working together",["The team breaks up","Conflict is at its highest"],"Norming follows storming as teams settle into routines."],["What is groupthink?","Going along with an idea to avoid conflict, even when it's flawed",["Everyone thinking independently","A brainstorming method"],"Encouraging honest input helps teams avoid groupthink."],["Which is an example of shared leadership?","Different members lead depending on their strengths",["One person always decides","No one leads"],"Shared leadership uses each member's strengths."],["Why hold a team debrief after a challenge?","To learn what to keep and what to change",["It wastes time","It's only for coaches"],"Reflection turns experience into improvement."]]},
+move:{
+ k2:[["Which movement lands on two feet together?","Jump",["Hop","Walk"],"Jumping uses two feet together."],["What is a LOW level?","Close to the floor",["Up high","In the air"],"Crawling and rolling happen at a low level."],["Which is moving sideways?","Sliding to the side",["Walking forward","Stepping backward"],"Sideways means moving left or right."],["What does moving slowly look like?","Like a turtle",["Like a cheetah","Like a rocket"],"Changing speed is part of moving well."]],
+ g35:[["Which words describe directions?","Forward, backward, sideways, up, and down",["Red, blue, and green","Loud and quiet"],"Directions tell you which way to travel."],["What does a mature skip look like?","A smooth step-hop, switching feet, with arms swinging",["Hopping on one foot only","Walking with a stomp"],"Arm swing and rhythm make skipping smooth."],["How should you land from a jump?","Softly, with bent knees",["With straight legs","On one hand"],"Soft landings protect your joints."],["What does strong force look like?","Stomping or a hard throw",["Tiptoeing","A gentle toss"],"Force can be strong or light."]],
+ g68:[["What does the concept of flow describe?","Whether movement is smooth and continuous or stop-and-start",["How much water you drink","The direction you face"],"Free flow keeps going; bound flow is controlled and stoppable."],["Which is a combination of movement skills?","Run, jump, and land",["Standing still","Sitting down"],"Combining skills is key in games and sports."],["Why practice a skill slowly before speeding up?","To build correct form first",["It's more fun","To get tired"],"Accuracy first, then speed."],["What is leading in movement relationships?","One partner moves and the other follows",["Both stand still","Moving alone"],"Leading and following builds awareness of others."]],
+ g912:[["What is a closed skill?","A skill done in a stable, predictable setting, like a free throw",["A skill that changes with defenders","A skill no one can learn"],"Closed skills are the same every time you perform them."],["What is an open skill?","A skill done in a changing setting, like passing in soccer",["A free throw","A bowling roll"],"Open skills require reading and reacting."],["What does game-like practice mean?","Practicing in conditions similar to the real game",["Only practicing what's easy","Practicing without a goal"],"Game-like practice transfers better to real play."],["Why is feedback important when learning a skill?","It helps you correct errors and improve",["It slows learning","It isn't needed"],"Feedback from teachers, peers, or video speeds up learning."]]},
+throw:{
+ k2:[["When you catch, where should your eyes be?","On the ball",["On the ground","Closed"],"Watching the ball helps you catch it."],["What should your hands do when the ball arrives?","Squeeze and pull it in",["Stay stiff","Slap it away"],"Pulling in helps you hold on."],["When you kick a ball, where should you look?","At the ball",["At the sky","At your friend's shoes"],"Looking at the ball helps you kick it well."],["How do you toss a bean bag underhand?","Swing your arm low and let go in front",["Throw it over your head","Kick it"],"Underhand tosses start low and swing forward."]],
+ g35:[["How do you dribble a soccer ball with control?","Small, soft touches keeping the ball close",["Big kicks far ahead","Using your hands"],"Close touches keep the ball away from defenders."],["Where should you aim a basketball chest pass?","At your teammate's chest",["At their feet","Over their head"],"A chest-high pass is easiest to catch."],["What should your non-throwing arm do in an overhand throw?","Point at the target",["Stay in your pocket","Hang down"],"Pointing helps you aim and balance."],["To catch a ball below your waist, point your...","Pinkies together",["Thumbs together","Elbows out"],"Pinkies together below the waist; thumbs together above."]],
+ g68:[["What is a volley?","Hitting the ball before it touches the ground",["Catching the ball","Letting it bounce"],"Volleying keeps the ball in the air."],["In a forearm pass (bump), where should the ball hit?","The flat part of your forearms",["Your fists","Your fingertips"],"A flat platform sends the ball straight up."],["Why keep your knees bent when receiving a ball?","To stay balanced and ready to move",["To look shorter","It slows you down"],"An athletic stance helps you react."],["What helps accuracy when striking with a racket or paddle?","Watch the ball, step toward the target, and follow through",["Close your eyes","Swing as hard as you can"],"The same cues as throwing apply to striking."]],
+ g912:[["What does backspin do to a basketball shot?","Softens the bounce off the rim",["Makes it go farther","Speeds it up"],"Backspin gives shots a softer touch."],["What is weight transfer in a throw or strike?","Shifting weight from the back foot to the front foot",["Standing still","Leaning backward"],"Weight transfer adds power."],["Why do skilled passers disguise their passes?","To keep defenders from anticipating them",["To look fancy","It's required"],"Deception creates open passing lanes."],["What is the sweet spot on a bat or racket?","The area that transfers the most energy to the ball",["The handle","The painted logo"],"The sweet spot gives the most power with the least vibration."]]},
+dance:{
+ k2:[["How can your body move to slow music?","Slowly and smoothly",["Fast and jerky","Not at all"],"Match your movement to the music."],["Which is a body shape you can make?","A star",["A car","A cloud"],"Stars, balls, and bridges are body shapes."],["What should you do before a gymnastics roll?","Check that the mat is clear",["Run and dive","Close your eyes"],"A clear space means safe rolling."],["How can you show a happy dance?","Big, bouncy moves",["Curled up and still","Frowning and slow"],"Dance can show feelings."]],
+ g35:[["What is rhythm?","A pattern of beats",["A color","A type of ball"],"Clapping patterns help you feel rhythm."],["What is a static balance?","Holding still in a balanced position",["Running fast","Rolling"],"Static balances hold still; dynamic balances move."],["Which is a dynamic balance?","Walking on a line",["Standing still on one foot","Sitting"],"Dynamic balance means staying steady while moving."],["Why do dancers practice a routine many times?","To remember the steps and perform smoothly",["To get bored","It isn't needed"],"Practice builds memory and confidence."]],
+ g68:[["What is unison in dance?","Everyone does the same movement at the same time",["Dancing alone","Moving at different times"],"Unison looks powerful and organized."],["What leads in a cartwheel?","The hands, one after the other",["The head","The knees"],"Hand, hand, foot, foot."],["Why do gymnasts keep their muscles tight in a balance?","Tight muscles help control the body",["To look taller","It makes them tired"],"Core tension keeps balances steady."],["What does energy mean in dance?","How movement is done, like sharp, smooth, or heavy",["How long the dance lasts","How many dancers there are"],"Energy gives movement its quality."]],
+ g912:[["Flexibility training in dance mainly improves...","Range of motion",["Reaction time","Body composition only"],"Stretching improves how far joints can move."],["What is a motif in choreography?","A short movement phrase that repeats or develops",["The costume","The music volume"],"Motifs give a dance its theme."],["Why is core strength important in gymnastics?","It stabilizes the body during balances and rotations",["It isn't","It only matters for looks"],"A strong core controls your center of gravity."],["How can dance support mental health?","It can reduce stress and boost mood",["It increases anxiety","It has no effect"],"Movement and music both lift mood."]]},
+sports:{
+ k2:[["In tag, who is it?","The person trying to tag others",["The person hiding","The teacher"],"It chases and tries to tag."],["What should you do when the whistle blows?","Stop and listen",["Keep playing","Run away"],"The whistle means freeze and listen."],["Which sport uses a hoop and a ball?","Basketball",["Soccer","Tennis"],"You shoot the ball into the hoop in basketball."],["How does your team win a relay?","By working together and doing your part",["By cheating","By skipping turns"],"Every teammate matters in a relay."]],
+ g35:[["What is dribbling in basketball?","Bouncing the ball while you move",["Carrying the ball","Kicking the ball"],"You must dribble to move with the ball."],["What is the goal of defense?","Stop the other team from scoring",["Score points","Sit on the bench"],"Defense protects your goal."],["In kickball, where do you run after kicking?","To first base",["To third base","Stay at home plate"],"Bases go in order: first, second, third, home."],["Why do teammates spread out on the field?","To create space and passing options",["To avoid each other","It doesn't matter"],"Bunching up makes passing harder."]],
+ g68:[["What is a fast break in basketball?","Moving the ball up court quickly before the defense sets up",["A timeout","A slow walk"],"Fast breaks create easy scoring chances."],["What is marking in soccer?","Staying close to an opponent so they can't get the ball",["Drawing lines","Scoring a goal"],"Tight marking limits passing options."],["In a net game, where should you aim?","At open spaces the opponent can't reach",["Straight at the opponent","Into the net"],"Place the ball away from defenders."],["What does support mean on offense?","Moving to give the ball carrier a safe passing option",["Standing still","Guarding the goal"],"Support keeps possession alive."]],
+ g912:[["What is a screen (pick) in basketball?","Blocking a defender's path to free a teammate",["A type of foul shot","Stealing the ball"],"Screens create open shots and drives."],["What does switching the field mean in soccer?","Passing to the opposite side to find space",["Changing goalies","Trading jerseys"],"Switching stretches the defense."],["Why do teams scout opponents?","To plan strategies around their strengths and weaknesses",["To copy their uniforms","It isn't useful"],"Preparation leads to smarter tactics."],["What is a tactic?","A specific action used to carry out a strategy during play",["The final score","A rule violation"],"Strategy is the plan; tactics are how you carry it out."]]},
+fitness:{
+ k2:[["Which activity helps your muscles get stronger?","Wall push-ups",["Lying on the couch","Sleeping"],"Pushing and pulling build strong muscles."],["What happens to your body when you exercise?","You breathe faster and feel warm",["You get cold and sleepy","Nothing happens"],"Those are signs your body is working hard."],["Which activity helps you run longer?","Playing tag often",["Sitting still","Watching others play"],"Moving often builds endurance."],["Why drink water when you play?","It helps your body stay cool",["It makes you slower","It isn't needed"],"Water replaces what you lose in sweat."]],
+ g35:[["Which activity builds cardiovascular endurance?","Jumping rope for several minutes",["Stretching","Holding a plank"],"Continuous movement works your heart and lungs."],["What are the five health-related fitness components?","Cardio endurance, muscular strength, muscular endurance, flexibility, body composition",["Speed, agility, balance, power, coordination","Running, jumping, throwing, catching, kicking"],"These five are linked to good health."],["Which body area does a plank mainly strengthen?","Your core",["Your ears","Your fingers"],"Planks build core muscular endurance."],["How can you check how hard you're working?","Count your pulse or use the talk test",["Guess","Look at the clock"],"Heart rate tells you your effort level."]],
+ g68:[["In FITT, what does the I stand for?","Intensity",["Interest","Inside"],"Intensity is how hard you work."],["In FITT, what does the second T stand for?","Type",["Toughness","Temperature"],"Type is the kind of activity, like running or cycling."],["Which builds muscular endurance?","Many repetitions of a light exercise",["One heavy lift","Stretching"],"High reps at lower resistance build endurance."],["What is progression in training?","Gradually increasing difficulty over time",["Doing the same thing forever","Stopping when it gets hard"],"Progression keeps fitness improving safely."]],
+ g912:[["What's the difference between aerobic and anaerobic exercise?","Aerobic uses oxygen for longer activity; anaerobic is short, intense bursts",["There is no difference","Anaerobic is always easier"],"Jogging is aerobic; sprinting is anaerobic."],["Which is a skill-related fitness component?","Coordination",["Body composition","Muscular endurance"],"Skill-related components help sports performance."],["What does DOMS stand for?","Delayed onset muscle soreness",["Daily oxygen muscle system","Dynamic overload muscle strength"],"DOMS usually peaks a day or two after new or hard exercise."],["Why include rest days in a training plan?","Muscles repair and get stronger during rest",["Rest days lower fitness","They aren't needed"],"Recovery is part of training."]]},
+testing:{
+ k2:[["What do we do after checking our fitness?","Try to do a little better next time",["Give up","Compare to everyone"],"Every bit of progress counts."],["How can you see how far you can stretch?","Reach toward your toes",["Measure your hair","Count your fingers"],"Reaching shows your flexibility."],["Why do we count laps or jumps?","To see how much we can do",["To make it boring","For no reason"],"Counting helps us see our progress."],["How should you feel about your fitness effort?","Proud of trying your best",["Embarrassed","Angry at others"],"Effort is what makes you grow."]],
+ g35:[["In a SMART goal, what does A stand for?","Attainable",["Awesome","Athletic"],"Attainable means you can really reach it."],["In a SMART goal, what does T stand for?","Timely",["Tough","Team"],"Timely means the goal has a deadline."],["Which fitness test measures arm and chest strength?","Push-ups",["Sit and reach","PACER"],"Push-ups test upper-body strength."],["Why test fitness at the start and end of the year?","To see how much we improved",["To rank students","To make P.E. harder"],"Pre- and post-tests show growth."]],
+ g68:[["What is a baseline in fitness testing?","Your starting score before training",["The best score in class","A line on the court"],"Baselines show where you started."],["Your PACER score is below the Healthy Fitness Zone. What's a good goal?","Add more aerobic activity each week",["Stop running","Only stretch"],"Small, steady increases help you reach the zone."],["What's a healthy way to use a fitness tracker?","Set personal goals and track progress",["Compete with strangers","Stress over every number"],"Trackers work best as a personal guide."],["What is heart rate recovery?","How quickly your heart rate drops after exercise",["Your resting heart rate","The fastest your heart can beat"],"Faster recovery often means better fitness."]],
+ g912:[["How do you find a target heart rate range?","Multiply your max heart rate by the target percentages",["Add 20 to your age","Double your resting rate"],"For example, 60% and 80% of your max heart rate."],["Which assessment checks core muscular endurance?","Cadence curl-ups",["PACER","Height measurement"],"Curl-ups at a steady cadence test core endurance."],["You miss a fitness goal deadline. What should you do?","Review the plan, adjust it, and set a new timeline",["Quit exercising","Pretend you reached it"],"Adjusting goals is part of the process."],["Why use more than one fitness assessment?","Each test measures a different part of fitness",["One test covers everything","To make class longer"],"Fitness has several components."]]},
+active:{
+ k2:[["Which is a fun active game at recess?","Tag or hopscotch",["Sitting on a bench","Reading alone"],"Recess is a great time to move."],["How can you stay active on a rainy day?","Dance or build an indoor obstacle course",["Nap all day","Watch TV all day"],"You can move inside too."],["Why is playing outside good for you?","Fresh air and room to run",["It makes you tired forever","It's boring"],"Outdoor play builds strong bodies."],["What's an active way to get to school when it's safe?","Walk or bike with an adult",["Always ride in a car","Take a nap"],"Walking and biking add activity to your day."]],
+ g35:[["How many minutes of activity do kids need each day?","At least 60",["10","5"],"An hour a day keeps kids healthy."],["Which activities use your whole body?","Swimming and jumping rope",["Reading and drawing","Watching and listening"],"Whole-body activities build overall fitness."],["Which is a healthy weekend choice?","A family bike ride",["Screens all day","Skipping meals"],"Weekends are great for active fun."],["Why is trying different activities good?","It works different muscles and keeps it fun",["It's confusing","It makes you weaker"],"Trying new activities builds more skills."]],
+ g68:[["Bad weather keeps you inside. What's a good plan?","Do an indoor workout",["Skip activity all week","Give up"],"Planning for barriers helps you stay active."],["What is moderate physical activity?","Activity that raises your heart rate but still lets you talk",["Sleeping","An all-out sprint"],"Brisk walking and easy cycling are moderate."],["Which is vigorous physical activity?","Running or fast swimming",["Slow walking","Stretching"],"Vigorous activity makes it hard to talk."],["How can you encourage friends to be active?","Invite them to play a sport or go for a walk",["Tease them","Ignore them"],"Being active with friends is more fun."]],
+ g912:[["How can physical activity lower chronic disease risk?","It improves heart health, blood sugar control, and body composition",["It has no effect","It only affects looks"],"Regular activity lowers risk of heart disease and type 2 diabetes."],["How can someone stay active with a desk job?","Take movement breaks and walk during breaks",["Sit all day","Only exercise on vacation"],"Breaking up sitting time helps health."],["What's a benefit of a community sports league?","Social connection and motivation to stay active",["A guaranteed scholarship","No benefits"],"Social support keeps people active."],["Why is jumping and other bone-strengthening activity important for teens?","It builds bone density while bones are growing",["It weakens bones","It isn't needed"],"The teen years are key for building strong bones."]]},
+nutrition:{
+ k2:[["Which is a healthy snack?","Carrot sticks",["Candy","Soda"],"Crunchy veggies make a great snack."],["Which food is a grain?","Bread",["Apple","Chicken"],"Bread, rice, and cereal are grains."],["Which food is a protein?","Eggs",["Grapes","Lettuce"],"Protein helps your muscles grow."],["Why eat fruits and veggies of different colors?","Each color gives your body different good things",["They all taste the same","Colors don't matter"],"Eat the rainbow!"]],
+ g35:[["What does fiber help with?","Digestion",["Eyesight","Hair color"],"Fiber is in fruits, vegetables, beans, and whole grains."],["Which drink has the most added sugar?","Regular soda",["Water","Plain milk"],"Soda is loaded with added sugar."],["Which nutrient is the body's main energy source?","Carbohydrates",["Vitamins","Minerals"],"Carbs fuel your brain and muscles."],["Why is breakfast important on school days?","It gives you energy to think and learn",["It makes you sleepy","It isn't important"],"Breakfast helps you focus."]],
+ g68:[["What are empty calories?","Calories from foods with few nutrients, like added sugars",["Calories that don't count","Calories in water"],"Choose foods that give nutrients along with energy."],["Which vitamin does sunlight help your body make?","Vitamin D",["Vitamin C","Vitamin A"],"Vitamin D helps your body use calcium."],["What do fats do in the body?","Store energy and help absorb some vitamins",["Only build muscle","Fight germs"],"Healthy fats are part of a balanced diet."],["Which is a good pre-game snack?","A banana or whole-grain toast",["A large fried meal","Candy and soda"],"Easy-to-digest carbs give quick energy."]],
+ g912:[["Which vitamins are fat-soluble?","A, D, E, and K",["B and C","All vitamins"],"Fat-soluble vitamins are stored in the body's fat."],["What does ultra-processed food generally mean?","Food made mostly from refined ingredients and additives",["Fresh fruit","Plain rice"],"Eating more whole foods is a healthy habit."],["Why limit sodium?","Too much can raise blood pressure",["It builds muscle","It has no effect"],"Many packaged foods are high in sodium."],["What's a sign of a balanced meal?","It includes several food groups",["It has one food group","It's all dessert"],"MyPlate shows how to balance a meal."]]},
+body:{
+ k2:[["What part of your body helps you think?","Your brain",["Your elbow","Your knee"],"Your brain controls everything you do."],["Which sense do you use with your eyes?","Sight",["Hearing","Taste"],"The five senses are sight, hearing, smell, taste, and touch."],["What protects your brain?","Your skull",["Only your hair","Your hat"],"Your skull is a hard bone that protects your brain."],["Where does food go when you swallow?","To your stomach",["To your lungs","To your feet"],"Your stomach helps break down food."]],
+ g35:[["What does the digestive system do?","Breaks down food so your body can use it",["Pumps blood","Helps you see"],"Digestion turns food into energy and nutrients."],["Which organs filter your blood?","Kidneys",["Lungs","Ears"],"Kidneys clean your blood and make urine."],["What does your nervous system do?","Sends messages between your brain and body",["Digests food","Stores fat"],"Nerves carry signals all over your body."],["Where does blood pick up oxygen?","In the lungs",["In the stomach","In the bones"],"Blood picks up oxygen in the lungs and delivers it everywhere."]],
+ g68:[["Which way do veins carry blood?","Back to the heart",["Away from the heart","Only to the brain"],"Veins return blood to the heart."],["Which blood cells carry oxygen?","Red blood cells",["White blood cells","Platelets"],"Red blood cells contain hemoglobin, which carries oxygen."],["What do platelets do?","Help blood clot",["Carry oxygen","Fight infections"],"Platelets stop bleeding by forming clots."],["Which system makes hormones?","Endocrine system",["Skeletal system","Digestive system"],"Hormones control growth, energy, and more."]],
+ g912:[["What is cardiac output?","The amount of blood the heart pumps per minute",["Heartbeats per day","Blood pressure"],"Cardiac output = heart rate × stroke volume."],["What is stroke volume?","The amount of blood pumped with each heartbeat",["A type of brain injury","Breathing rate"],"Training increases stroke volume."],["Which type of muscle makes up the heart?","Cardiac muscle",["Skeletal muscle","Smooth muscle"],"Cardiac muscle works without you thinking about it."],["How does regular aerobic exercise affect blood pressure?","It can help lower it",["It raises it permanently","It has no effect"],"Physical activity supports healthy blood pressure."]]},
+habits:{
+ k2:[["What's a healthy morning habit?","Brush your teeth and eat breakfast",["Skip breakfast","Stay in bed all day"],"Healthy mornings help you have a great day."],["Why wear a coat in cold weather?","To keep your body warm",["To look silly","To get sick"],"Dressing for the weather keeps you healthy."],["How long should you brush your teeth?","About two minutes",["Two seconds","One hour"],"Sing a song while you brush."],["What helps when you feel tired during the day?","Getting enough sleep at night",["Eating candy","More screen time"],"Sleep gives you energy."]],
+ g35:[["Why do kids need a yearly checkup?","To track growth and catch problems early",["Only when sick","To get candy"],"Yearly checkups keep you healthy."],["Which is a healthy bedtime routine?","Bath, brush teeth, read, lights out",["Video games until midnight","Soda before bed"],"Routines tell your body it's time to sleep."],["What is the 20-20-20 rule for screens?","Every 20 minutes, look 20 feet away for 20 seconds",["Sit 20 inches closer","Use screens for 20 hours"],"Breaks help reduce eye strain."],["Why wear a mouthguard in some sports?","To protect your teeth and mouth",["To look cool","It isn't needed"],"Mouthguards prevent dental injuries."]],
+ g68:[["How much sleep do teens need?","8–10 hours",["4–5 hours","12–14 hours"],"Most teens need 8 to 10 hours each night."],["Which is a sign of healthy screen habits?","Screens off during meals and before bed",["Screens on all night","Screens during class without permission"],"Limits protect sleep and relationships."],["Why see a dentist twice a year?","To prevent cavities and gum disease",["Only if something hurts","To whiten teeth"],"Regular cleanings catch problems early."],["What's a healthy way to handle a busy schedule?","Plan ahead and make time for sleep and activity",["Stay up all night","Skip meals"],"Balance helps you feel your best."]],
+ g912:[["What's a benefit of consistent sleep and wake times?","Better mood, focus, and athletic performance",["No benefit","Worse memory"],"Consistency helps your body clock."],["What is a screening test?","A test that checks for health problems before symptoms appear",["A movie preview","A fitness challenge"],"Screenings help find problems early."],["How does sleep affect athletic performance?","It improves reaction time, recovery, and accuracy",["It has no effect","It makes athletes slower"],"Athletes need quality sleep to perform."],["Which is a healthy way to use social media?","Set time limits and follow accounts that support your well-being",["Scroll for hours before bed","Compare yourself to everyone"],"Intentional use protects mental health."]]},
+hygiene:{
+ k2:[["What should you use to wash your hands?","Soap and water",["Only water","Juice"],"Soap helps wash germs away."],["You have a runny nose. What should you do?","Use a tissue and throw it away",["Wipe it on your sleeve","Share your tissue"],"Toss the tissue and wash your hands."],["Why take a bath or shower?","To keep your body clean",["To get dirty","For no reason"],"Clean bodies stay healthy."],["Should you share a toothbrush?","No, never",["Yes, with friends","Only on weekends"],"Your toothbrush is just for you."]],
+ g35:[["How do germs spread?","Through touch, coughs, sneezes, and sharing items",["Only through sunlight","They don't spread"],"Washing hands stops many germs."],["When should you stay home from school?","When you have a fever or are contagious",["When you feel a little bored","Never"],"Staying home helps protect others."],["What does a fever usually mean?","Your body is fighting an infection",["You're very healthy","You need more candy"],"A fever is one way your body fights germs."],["Why cover a cough?","To stop germs from spreading to others",["To be quiet","It's a rule for no reason"],"Cough into your elbow or a tissue."]],
+ g68:[["What is an epidemic?","A disease spreading to many people in an area",["A healthy habit","A type of vitamin"],"Public health works to stop epidemics."],["Which helps prevent the flu?","A flu vaccine and handwashing",["Sharing cups","Skipping sleep"],"Vaccines and handwashing reduce flu spread."],["Why finish an antibiotic as prescribed?","To fully treat the infection",["It's optional","To save the rest"],"Stopping early can let bacteria come back."],["How can athletes prevent skin infections?","Shower after practice and clean equipment",["Share towels","Wear the same socks for days"],"Clean skin and gear prevent infections."]],
+ g912:[["What is an incubation period?","The time between exposure to a germ and the start of symptoms",["The length of a fever","Recovery time"],"People can sometimes spread illness before symptoms show."],["What is a vector-borne disease?","A disease spread by insects or ticks, like Lyme disease",["A disease from food","A genetic disease"],"Insect repellent and tick checks help prevent them."],["Which type 2 diabetes risk factor can be changed?","Physical inactivity",["Age","Family history"],"Being active lowers diabetes risk."],["What does immunization mean?","Becoming protected from a disease, often through a vaccine",["Getting sick on purpose","Taking antibiotics"],"Immunization protects individuals and communities."]]},
+mental:{
+ k2:[["What's a good way to calm down when you're upset?","Count to 10 slowly",["Scream","Break something"],"Counting gives your body time to calm down."],["How can you tell a friend feels sad?","Their face and body look down",["They're laughing","They're jumping up and down"],"Noticing feelings helps you be a good friend."],["What can you do when you feel worried?","Talk to a grown-up you trust",["Keep it inside forever","Hide"],"Talking about worries helps."],["What can make you feel proud?","Trying something hard",["Being mean","Giving up"],"Trying hard builds confidence."]],
+ g35:[["Which can be a sign you're stressed?","A tight stomach or a headache",["Feeling calm","Laughing"],"Stress can show up in your body."],["What is self-control?","Choosing how to act even when you have strong feelings",["Doing whatever you want","Never having feelings"],"Self-control helps you make good choices."],["A friend seems very sad for a long time. What should you do?","Tell a trusted adult",["Ignore it","Tell everyone at school"],"Adults can help your friend get support."],["How can you show kindness to someone new?","Invite them to join your group",["Ignore them","Laugh at them"],"Kindness helps others feel welcome."]],
+ g68:[["What is anxiety?","Feelings of worry or fear that can affect the body",["Being very happy","A type of vitamin"],"Some anxiety is normal; if it's too much, help is available."],["What's a healthy way to handle disappointment?","Talk about it and focus on what you can control",["Blame others","Give up forever"],"Resilience grows from how we handle setbacks."],["What is self-esteem?","How you feel about yourself",["How tall you are","How fast you run"],"Healthy self-esteem helps you face challenges."],["Which is an example of setting a healthy boundary?","Saying 'I need some space right now'",["Doing everything others ask","Never saying no"],"Boundaries protect your well-being."]],
+ g912:[["Which could be a sign of depression when it lasts two weeks or more?","Ongoing sadness and losing interest in activities",["Having one bad day","Feeling tired after practice"],"Depression is treatable. Talk to a trusted adult or counselor."],["Where can students get mental health support at school?","The school counselor, psychologist, or social worker",["Only friends","Nowhere"],"School staff are there to help."],["What is emotional regulation?","Managing emotions in healthy ways",["Hiding all emotions","Reacting instantly"],"Regulation skills can be learned and practiced."],["How does physical activity support mental health?","It can reduce stress and improve mood and sleep",["It increases stress","It has no effect"],"Exercise is a powerful mental health tool."]]},
+violence:{
+ k2:[["What should you do if someone pushes you?","Tell a trusted adult",["Push them back","Keep it a secret"],"Adults can help solve the problem."],["What's a calm way to show you're upset?","Say 'I don't like that'",["Hit","Throw things"],"Words help others know how you feel."],["A stranger asks you to go with them. What should you do?","Say no, get away, and tell a trusted adult",["Go with them","Keep it a secret"],"Always check with a trusted adult first."],["How can you help make your class a safe place?","Be kind and include others",["Leave people out","Call names"],"Kindness keeps everyone safe."]],
+ g35:[["Who can you tell if you are being bullied?","A parent, teacher, or counselor",["No one","Only the bully"],"Telling is getting help, not tattling."],["What's the difference between tattling and reporting?","Reporting is getting help when someone is hurt or unsafe",["There is no difference","Reporting is getting people in trouble for fun"],"Reporting keeps people safe."],["What should you do with a mean message online?","Don't reply, save it, and tell an adult",["Reply with something mean","Delete it and hide it"],"Saving it helps adults stop the bullying."],["What's a good way to cool down during a conflict?","Take a break and breathe",["Keep arguing","Push the other person"],"Calm minds solve problems better."]],
+ g68:[["Which is an example of relational aggression?","Spreading rumors or leaving someone out on purpose",["Playing a fair game","Inviting someone to lunch"],"Hurting relationships is a form of bullying."],["Why is sharing someone's private photos without permission harmful?","It violates their privacy and can be illegal",["It's just a joke","It's always fine"],"Always ask before sharing images of others."],["Which is a warning sign someone may hurt others?","Talking about or threatening violence",["Joining a club","Studying for a test"],"Take threats seriously and report them."],["What does 'see something, say something' mean?","Report anything that seems unsafe to a trusted adult",["Post it online","Keep it secret"],"Reporting can prevent harm."]],
+ g912:[["Which is an example of coercion?","Pressuring someone with threats to do something",["Asking politely","Giving someone a real choice"],"Coercion takes away real choice."],["A friend may be in an abusive relationship. What can you do?","Listen without judging and encourage them to talk to a trusted adult",["Tell them to stay","Ignore it"],"Support and resources can help them stay safe."],["Why is hazing prevention everyone's responsibility?","Anyone can refuse to take part and report it",["Only coaches can stop it","It isn't harmful"],"Speaking up protects teammates."],["What's a healthy way to handle anger?","Pause, name the feeling, and choose a calm response",["Lash out","Hold it in forever"],"Anger is normal; how you act on it matters."]]},
+safety:{
+ k2:[["You get lost in a store. What should you do?","Stay where you are and ask a worker for help",["Leave the store","Hide"],"Store workers can help you find your grown-up."],["Where should you swim?","Only where an adult is watching",["Anywhere alone","In deep water without help"],"Always swim with an adult nearby."],["What do you wear in a car?","A seatbelt",["Nothing extra","A helmet"],"Seatbelts keep you safe in the car."],["You see a dog you don't know. What should you do?","Ask the owner before petting",["Run up and hug it","Pull its tail"],"Always ask first."]],
+ g35:[["What should you do during a thunderstorm?","Go indoors",["Stand under a tree","Swim in a pool"],"When thunder roars, go indoors."],["What's one way to stay safe on a bike?","Wear a helmet and follow traffic signals",["Ride without a helmet","Ride against traffic"],"Helmets protect your brain."],["Why have a family fire escape plan?","So everyone knows how to get out and where to meet",["It's not needed","To make chores"],"Practice your plan at home."],["You get a splinter. What should you do?","Tell an adult who can remove it safely",["Leave it forever","Dig at it with dirty fingers"],"Clean it and remove it carefully."]],
+ g68:[["What comes first in Check, Call, Care?","Check the scene and the person",["Call a friend","Leave"],"Check, then call 911 if needed, then care for the person."],["How can you prevent sports injuries?","Warm up, wear proper gear, and use good technique",["Skip warm-ups","Play through pain"],"Prevention keeps you in the game."],["Someone has an allergic reaction and trouble breathing. What should you do?","Call 911 and use their epinephrine auto-injector if they have one",["Give them a snack","Wait and see"],"Severe allergic reactions are emergencies."],["Why not share your location publicly online?","Strangers could find you",["It's boring","It uses data"],"Only share your location with trusted people."]],
+ g912:[["What do abdominal thrusts (the Heimlich maneuver) treat?","Choking in a conscious person",["A broken bone","A burn"],"Abdominal thrusts push air out to dislodge the object."],["What should you do if someone has a seizure?","Protect their head, move objects away, and time the seizure",["Hold them down","Put something in their mouth"],"Call 911 if it lasts more than 5 minutes."],["What does a sports emergency action plan include?","Roles, contact numbers, and where the AED is",["Game strategies","Uniform colors"],"Planning ahead saves lives."],["What is hypothermia?","Dangerously low body temperature",["A high fever","Dehydration"],"Wet, cold conditions raise the risk."]]},
+substance:{
+ k2:[["A friend offers you a pill. What should you do?","Say no and tell an adult",["Take it","Hide it"],"Only take medicine from a trusted adult."],["Why keep medicine out of little kids' reach?","It could make them very sick",["It's not important","So they can find it"],"Medicine safety protects everyone."],["What does a medicine label tell you?","How to use it safely",["What color it is","Nothing"],"Adults read labels carefully."],["Is it safe to breathe in smoke?","No, it hurts your lungs",["Yes, always","A little is okay"],"Stay away from smoke."]],
+ g35:[["What is a drug?","A substance that changes how the body or mind works",["A type of food","A kind of exercise"],"Medicines are drugs too, and must be used safely."],["What is a prescription medicine?","Medicine a doctor orders for one specific person",["Candy from a store","Any vitamin"],"Prescriptions are only for the person named."],["Which is a healthy way to have fun?","Play sports, make music, or hang out with friends",["Try a vape","Take someone else's medicine"],"There are many healthy ways to have fun."],["What does drug-free mean?","Choosing not to use harmful substances",["Taking any drugs you want","Only using drugs on weekends"],"Being drug-free keeps you healthy."]],
+ g68:[["Why are energy drinks risky for teens?","They can have high levels of caffeine and sugar",["They're the same as water","They have no effects"],"Too much caffeine can affect heart rate and sleep."],["What is an inhalant?","A chemical vapor breathed in to get high, which can be deadly",["An asthma medicine only","A breathing exercise"],"Inhalants can cause sudden death, even the first time."],["What's a healthy response to stress instead of using substances?","Exercise, talk to someone, or practice deep breathing",["Try a vape","Drink alcohol"],"Healthy coping protects your body and brain."],["Where can you find accurate information about drugs?","Trusted adults, doctors, or government health websites",["Rumors","Social media dares"],"Reliable sources give accurate facts."]],
+ g912:[["What does tolerance mean in substance use?","Needing more of a substance to get the same effect",["Being kind to others","Being immune to drugs"],"Tolerance is a step toward dependence."],["Why is marijuana use risky for teens?","It can affect memory, attention, and learning in the developing brain",["It improves grades","It has no effects"],"The brain keeps developing into the mid-20s."],["What are withdrawal symptoms?","Uncomfortable effects when someone stops using an addictive substance",["Instant benefits of quitting","A type of vitamin"],"Withdrawal makes quitting hard, but help is available."],["How can you support a friend who wants to quit vaping?","Encourage them and help them find resources",["Offer them a vape","Make fun of them"],"Support makes quitting easier."]]},
+community:{
+ k2:[["Why pick up litter?","To keep our world clean and safe",["It isn't important","To make more mess"],"Clean places are healthier."],["How can you save energy?","Turn off lights when you leave a room",["Leave lights on","Keep the fridge open"],"Saving energy helps the planet."],["Who helps when there's a fire?","Firefighters",["Bakers","Mail carriers"],"Firefighters keep communities safe."],["Why are trees good for a community?","They clean the air and give shade",["They make pollution","They aren't useful"],"Trees help everyone breathe easier."]],
+ g35:[["What does reduce, reuse, recycle mean?","Use less, use things again, and turn old things into new ones",["Throw everything away","Buy more stuff"],"The three Rs protect the environment."],["How can noise pollution affect health?","It can cause stress and hearing damage",["It improves sleep","It has no effect"],"Keep volume at safe levels."],["Which health career helps with teeth?","Dentist or dental hygienist",["Chef","Pilot"],"Dental professionals keep teeth healthy."],["Why does handwashing matter for the whole community?","It stops germs from spreading to others",["It only helps you","It isn't important"],"Healthy habits protect everyone."]],
+ g68:[["What is a health product ad trying to do?","Persuade you to buy something",["Give unbiased facts","Nothing"],"Think critically about health ads."],["Which reduces your environmental impact?","Using a reusable water bottle",["Buying lots of single-use plastic","Littering"],"Small choices make a difference."],["What does a school nurse do?","Cares for students' health needs at school",["Teaches math","Drives the bus"],"School nurses are an important health resource."],["Why is secondhand vapor a community health concern?","It can expose others to nicotine and chemicals",["It's just water","It helps others breathe"],"Smoke- and vape-free spaces protect everyone."]],
+ g912:[["What is a social determinant of health?","A condition where people live, learn, and work that affects their health",["A type of vitamin","A fitness test"],"Examples include access to healthy food, safe housing, and health care."],["Which is health advocacy at school?","Proposing a plan for healthier vending options",["Complaining online","Ignoring issues"],"Advocacy uses facts to push for change."],["What does the Environmental Protection Agency (EPA) do?","Protects human health and the environment",["Runs hospitals","Coaches sports"],"The EPA sets standards for clean air and water."],["Why is mental health a community issue?","It affects families, schools, and workplaces",["It only affects individuals","It isn't important"],"Communities thrive when people have support."]]}
+};
+Object.keys(MORE).forEach(id=>{ const u=UNITS.find(x=>x.id===id); if(u) Object.keys(MORE[id]).forEach(b=>{ u.q[b]=u.q[b].concat(MORE[id][b]); }); });
+
+const SOL = {
+  rules:"VA PE strand: Responsible Behaviors", move:"VA PE strand: Movement Principles & Concepts", fitness:"VA PE strand: Personal Fitness",
+  coop:"VA PE strand: Responsible Behaviors", throw:"VA PE strand: Skilled Movement", sports:"VA PE strand: Movement Principles & Concepts",
+  dance:"VA PE strand: Skilled Movement", testing:"VA PE strand: Personal Fitness", active:"VA PE strand: Physically Active Lifestyle",
+  nutrition:"VA Health topic: Nutrition", body:"VA Health topic: Body Systems", hygiene:"VA Health topic: Disease Prevention",
+  habits:"VA Health topic: Physical Health", mental:"VA Health topic: Mental Wellness & SEL", violence:"VA Health topic: Violence Prevention",
+  safety:"VA Health topic: Safety & Injury Prevention", substance:"VA Health topic: Substance Abuse Prevention", community:"VA Health topic: Community & Environmental Health"
+};
+const ORDER = ["rules","coop","move","throw","dance","sports","fitness","testing","active","nutrition","body","habits","hygiene","mental","violence","safety","substance","community"];
+UNITS.sort((a,b)=>ORDER.indexOf(a.id)-ORDER.indexOf(b.id));
+
+const MIX = [
+  { id:"mix-pe", icon:"🎲", name:"Mix: All PE Units" },
+  { id:"mix-health", icon:"🎲", name:"Mix: All Health Units" },
+  { id:"mix-all", icon:"🌟", name:"Mix: Everything" }
+];
+
+const PROMPTS = {
+  k2:[
+    { p:"Watch your class. What level are they moving at?", c:["⬆️ High","➡️ Medium","⬇️ Low"] },
+    { p:"Find someone being a good sport. What are they doing?", c:["🤝 Kind words","🙌 Cheering","🔄 Taking turns"] },
+    { p:"What pathway is your class moving in?", c:["➖ Straight","〰️ Curvy","⚡ Zigzag"] },
+    { p:"How does your class look right now?", c:["😀 Having fun","💪 Working hard","😮‍💨 Tired"] },
+    { p:"Is anyone helping a friend?", c:["👍 Yes!","👀 Still looking"] },
+    { p:"What equipment is your class using?", c:["⚽ Balls","⭕ Hoops","🔶 Cones","🎽 Something else"] },
+    { p:"How fast is your class moving?", c:["🐢 Slow","🐇 Medium","🚀 Fast"] }
+  ],
+  g35:[
+    "Name one skill a classmate is doing well. What makes it good?",
+    "Write down one example of good sportsmanship you saw.",
+    "Which fitness component is the class working on right now? How can you tell?",
+    "If you were playing, what strategy would you try?",
+    "How is one team communicating? Write something they said or did.",
+    "What's one rule of today's game, and why does it matter?"
+  ],
+  g68:[
+    "Describe the movement pattern of one skill being practiced. What are the key cues?",
+    "Which fitness component(s) does today's activity develop? Explain.",
+    "Watch one team's strategy. What's working, and what would you change?",
+    "Record one example of leadership or teamwork you saw.",
+    "Is today's activity light, moderate, or vigorous? What evidence do you see?",
+    "What safety rule matters most in this activity, and why?"
+  ],
+  g912:[
+    "Analyze one skill: describe its preparation, execution, and follow-through.",
+    "Which FITT variables (frequency, intensity, time, type) does today's activity target?",
+    "Evaluate a team's offensive or defensive tactics. Suggest one improvement.",
+    "Identify an example of effective communication or leadership. What impact did it have?",
+    "How could this activity be modified to include a student with a different ability level?",
+    "Design a warm-up that would prepare the class for today's activity."
+  ]
+};
+
+/* ---------- helpers ---------- */
+const app = document.getElementById('app');
+const canSpeak = 'speechSynthesis' in window;
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function unitInfo(id){ return UNITS.find(u=>u.id===id) || MIX.find(m=>m.id===id); }
+function unitsFor(id){
+  if(id==='mix-pe') return UNITS.filter(u=>u.cat==='PE');
+  if(id==='mix-health') return UNITS.filter(u=>u.cat==='Health');
+  if(id==='mix-all') return UNITS;
+  return UNITS.filter(u=>u.id===id);
+}
+function speak(text){
+  if(!canSpeak) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,''));
+    u.rate = settings && settings.band==='k2' ? 0.9 : 1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function stopSpeak(){ if(canSpeak){ try{ speechSynthesis.cancel(); }catch(e){} } }
+function bestKey(){ return 'best_'+settings.band+'_'+settings.unit; }
+function top(studentMode){
+  return `<div class="top"><div class="brand"><span class="spotlogo" aria-hidden="true"></span>Bench Boost</div>${
+    studentMode ? `<button class="iconbtn" id="gear" aria-label="Teacher settings">⚙️</button>` : `<span class="toptag">Teacher setup</span>`}</div>`;
+}
+function bindGear(){ const g=document.getElementById('gear'); if(g) g.onclick=()=>{ stopSpeak(); renderPin(renderSetup); }; }
+function go(fn){ stopSpeak(); fn(); window.scrollTo(0,0); }
+
+/* ---------- state ---------- */
+let settings = store.get('settings', null);
+let pin = store.get('pin', '1234');
+let quiz = null, rep = null;
+
+/* ---------- email results to teacher (mailto, no backend, no accounts) ---------- */
+function sendBoxHTML(prefix, prefillName){
+  return `<div class="card sendbox">
+    <h2>Email these results to your teacher</h2>
+    <p class="hint" style="margin:0 0 10px">This opens an email on this device. Your name clears from here once it's sent.</p>
+    <label for="${prefix}Name">Your name</label>
+    <input class="text" id="${prefix}Name" placeholder="First and last name" value="${esc(prefillName||'')}">
+    <label for="${prefix}Email">Teacher's email</label>
+    <input class="text" id="${prefix}Email" type="email" inputmode="email" placeholder="teacher@school.org">
+    <p class="err" id="${prefix}Err" style="display:none"></p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn blue" id="${prefix}Send">Email my results</button>
+      <button class="btn plain" id="${prefix}Copy">Copy instead</button>
+    </div>
+    <div class="sendok" id="${prefix}Ok" style="display:none"></div>
+  </div>`;
+}
+function bindSendBox(prefix, subjectFn, bodyFn, onSent){
+  const nameEl = document.getElementById(prefix+'Name'), emailEl = document.getElementById(prefix+'Email'),
+        errEl = document.getElementById(prefix+'Err'), okEl = document.getElementById(prefix+'Ok'),
+        sendBtn = document.getElementById(prefix+'Send'), copyBtn = document.getElementById(prefix+'Copy');
+  if(!sendBtn) return;
+  function validated(){
+    const name = nameEl.value.trim(), email = emailEl.value.trim();
+    if(!name){ errEl.textContent = "Enter your name first."; errEl.style.display='block'; return null; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = "Enter a valid teacher email."; errEl.style.display='block'; return null; }
+    errEl.style.display = 'none';
+    return { name, email };
+  }
+  sendBtn.onclick = ()=>{
+    const v = validated(); if(!v) return;
+    const subject = subjectFn(v.name), body = bodyFn(v.name);
+    window.location.href = 'mailto:'+encodeURIComponent(v.email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    nameEl.value=''; emailEl.value='';
+    okEl.style.display='block'; okEl.textContent="Email opened below (or in your mail app) \u2014 tap send there to finish. Your name has been cleared from this device.";
+    if(onSent) onSent();
+  };
+  copyBtn.onclick = ()=>{
+    const v = validated(); if(!v) return;
+    const text = subjectFn(v.name)+"\n\n"+bodyFn(v.name);
+    const done = ()=>{ okEl.style.display='block'; okEl.textContent="Copied! Paste it into an email to your teacher. Your name has been cleared from this device."; nameEl.value=''; emailEl.value=''; if(onSent) onSent(); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(()=>{ errEl.textContent="Couldn't copy automatically \u2014 try the email button instead."; errEl.style.display='block'; }); }
+    else { errEl.textContent="Copy isn't available here \u2014 try the email button instead."; errEl.style.display='block'; }
+  };
+}
+
+/* ---------- teacher accounts (Supabase) ---------- */
+const SUPABASE_URL = 'https://otnqmobsvgueiqvgbtcy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6pmSCLBXzkrMdl3H518BCg_oJ1ILf7G';
+const DEFAULTS = { band:'k2', unit:'rules', rounds:10, speak:false, pin:'1234' };
+let sb = null, sessionUser = null, account = null, recovering = false;
+
+function authTop(){ return `<div class="top"><div class="brand"><span class="spotlogo" aria-hidden="true"></span>Bench Boost</div><span class="toptag">Teacher account</span></div>`; }
+function show(html){ stopSpeak(); document.body.className=''; app.innerHTML = html; window.scrollTo(0,0); }
+function field(id,label,type,extra){ return `<label for="${id}" style="font-weight:700;display:block;margin:12px 0 6px">${label}</label><input class="text" id="${id}" type="${type}" ${extra||''}>`; }
+function redirectUrl(){ return /^https?:$/.test(location.protocol) ? location.origin + location.pathname : undefined; }
+function isNetworkErr(e){ return /fetch|network|timeout|load failed/i.test((e && e.message) || ''); }
+function friendly(err){
+  const m = (err && err.message) || String(err || '');
+  if(err && (err.code==='PGRST205' || /Could not find the table|schema cache/i.test(m))) return "The database tables aren't set up yet. Run the setup SQL in Supabase, then refresh.";
+  if(err && err.code==='NOPROFILE') return "Your account exists but its profile record is missing. Contact support.";
+  if(/invalid api key|no api key|apikey/i.test(m)) return "The app's connection key is wrong or missing. Check SUPABASE_KEY at the top of the app code.";
+  if(/Invalid login credentials/i.test(m)) return "That email and password don't match.";
+  if(/already registered|already been registered/i.test(m)) return 'That email already has an account. Try signing in.';
+  if(/Email not confirmed/i.test(m)) return 'Check your email and tap the confirmation link first.';
+  if(/rate limit|too many/i.test(m)) return 'Too many tries. Wait a few minutes and try again.';
+  if(/fetch|network|load failed/i.test(m)) return "Can't reach the sign-in service. Check your internet connection.";
+  return m || 'Something went wrong. Try again.';
+}
+function entitled(a){
+  if(!a) return false;
+  if(a.status==='active' || a.status==='trialing') return true;
+  return !!a.trialEnds && new Date(a.trialEnds) > new Date();
+}
+function trialLine(){
+  if(!account) return '';
+  if(account.status==='active') return 'Subscription: active';
+  if(account.status==='trialing') return 'Subscription: in trial';
+  const days = account.trialEnds ? Math.ceil((new Date(account.trialEnds) - new Date()) / 864e5) : 0;
+  return days > 0 ? `Free trial: ${days} day${days===1?'':'s'} left` : 'Free trial ended';
+}
+function routeIntoApp(){
+  if(settings && unitInfo(settings.unit) && BANDS[settings.band]) renderHome(); else renderSetup();
+}
+
+async function pushSettings(s, p){
+  store.set('dirty', true);
+  const { error } = await sb.from('teacher_settings').upsert(
+    { user_id: sessionUser.id, band:s.band, unit:s.unit, rounds:s.rounds, speak:s.speak, pin:p, updated_at:new Date().toISOString() },
+    { onConflict:'user_id' });
+  if(error) throw error;
+  store.set('dirty', false);
+}
+
+async function loadAccount(){
+  const uid = sessionUser.id;
+  const p = await sb.from('profiles').select('email,subscription_status,trial_ends_at').eq('id', uid).maybeSingle();
+  if(p.error) throw p.error;
+  if(!p.data){ const e = new Error('missing-profile'); e.code = 'NOPROFILE'; throw e; }
+  const s = await sb.from('teacher_settings').select('band,unit,rounds,speak,pin').eq('user_id', uid).maybeSingle();
+  if(s.error) throw s.error;
+  account = { email: p.data.email || sessionUser.email, status: p.data.subscription_status, trialEnds: p.data.trial_ends_at };
+  store.set('acct', { uid, at: Date.now(), account });
+  const remote = Object.assign({}, DEFAULTS, s.data || {});
+  const localSettings = store.get('settings', null);
+  if(store.get('dirty', false) && localSettings){
+    settings = localSettings; pin = store.get('pin', remote.pin);
+    try{ await pushSettings(settings, pin); }catch(e){ /* stays dirty, retried next time */ }
+    return;
+  }
+  pin = remote.pin; store.set('pin', pin);
+  const untouched = !s.data || (remote.band===DEFAULTS.band && remote.unit===DEFAULTS.unit && remote.rounds===DEFAULTS.rounds && remote.speak===DEFAULTS.speak && remote.pin===DEFAULTS.pin);
+  if(untouched){ settings = null; store.set('settings', null); }
+  else { settings = { band:remote.band, unit:remote.unit, rounds:remote.rounds, speak:remote.speak }; store.set('settings', settings); }
+}
+
+async function enterApp(){
+  renderLoading('Loading your account...');
+  try{ await loadAccount(); }
+  catch(e){
+    const c = store.get('acct', null);
+    if(isNetworkErr(e) && c && sessionUser && c.uid===sessionUser.id && Date.now()-c.at < 7*864e5){
+      account = c.account; settings = store.get('settings', null); pin = store.get('pin', '1234');
+    } else { renderLoadError(e); return; }
+  }
+  if(!entitled(account)){ renderPaywall(); return; }
+  routeIntoApp();
+}
+
+async function doSignOut(){
+  try{ await sb.auth.signOut({ scope:'local' }); }catch(e){}
+  try{ Object.keys(localStorage).filter(k=>k.indexOf('sq_')===0).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  settings = null; pin = '1234'; account = null; sessionUser = null; recovering = false;
+  renderAuth('in');
+}
+
+function renderLoading(msg){ show(authTop()+`<div class="wrap center" style="padding-top:60px"><p class="sub">${esc(msg)}</p></div>`); }
+function renderConfigError(msg){ show(authTop()+`<div class="wrap" style="max-width:540px"><div class="card"><h2>Can't start</h2><p>${esc(msg)}</p><div class="row"><button class="btn go" id="retry">Refresh</button></div></div></div>`); document.getElementById('retry').onclick=()=>location.reload(); }
+function renderLoadError(e){
+  show(authTop()+`<div class="wrap" style="max-width:540px"><div class="card"><h2>We couldn't load your account</h2><p>${esc(friendly(e))}</p><div class="row"><button class="btn go" id="again">Try again</button><button class="btn plain" id="out">Sign out</button></div></div></div>`);
+  document.getElementById('again').onclick=enterApp;
+  document.getElementById('out').onclick=doSignOut;
+}
+function renderPaywall(){
+  show(authTop()+`<div class="wrap" style="max-width:540px"><div class="card center"><div style="font-size:52px">⏰</div><h1>Your free trial has ended</h1>
+    <p class="sub">${esc(account && account.email || '')}</p>
+    <p>Subscription checkout is being set up. Once it's open, you'll be able to subscribe here and pick up right where you left off.</p>
+    <div class="row"><button class="btn go" id="again">Check again</button><button class="btn plain" id="out">Sign out</button></div></div></div>`);
+  document.getElementById('again').onclick=enterApp;
+  document.getElementById('out').onclick=doSignOut;
+}
+function renderCheckEmail(email){
+  show(authTop()+`<div class="wrap" style="max-width:540px"><div class="card center"><div style="font-size:52px">📬</div><h1>Check your email</h1>
+    <p>We sent a confirmation link to <strong>${esc(email)}</strong>. Tap it, then come back and sign in. It can take a few minutes, and it may land in spam.</p>
+    <div class="row"><button class="btn go" id="back">Back to sign in</button></div></div></div>`);
+  document.getElementById('back').onclick=()=>renderAuth('in');
+}
+
+function renderAuth(mode, notice){
+  mode = mode || 'in';
+  const signin = mode==='in';
+  show(authTop()+`<div class="wrap" style="max-width:540px">
+    <h1>${signin?'Welcome back':'Start your free trial'}</h1>
+    <p class="sub">${signin?'Sign in to open Bench Boost on this device.':'Create a teacher account. Your 14-day trial starts right away.'}</p>
+    <div class="card">
+      <div class="chips"><button class="chip ${signin?'on':''}" data-m="in">Sign in</button><button class="chip ${!signin?'on':''}" data-m="up">Create account</button></div>
+      ${notice?`<div class="sendok">${esc(notice)}</div>`:''}
+      ${field('aEmail','Email','email','inputmode="email" autocomplete="email" placeholder="you@school.org"')}
+      ${field('aPass','Password','password',`autocomplete="${signin?'current-password':'new-password'}" placeholder="${signin?'Your password':'At least 8 characters'}"`)}
+      <p class="err" id="aErr" style="display:none"></p>
+      <div class="row" style="margin-top:16px"><button class="btn go" id="aGo">${signin?'Sign in':'Create account'}</button></div>
+      ${signin?`<p class="hint"><button class="linkbtn" id="aForgot">Forgot your password?</button></p>`:''}
+    </div></div>`);
+  const err = document.getElementById('aErr'), go_ = document.getElementById('aGo');
+  const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+  const busy = on => { go_.disabled = on; go_.textContent = on ? 'Working...' : (signin?'Sign in':'Create account'); };
+  app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>renderAuth(b.dataset.m));
+  const fg = document.getElementById('aForgot'); if(fg) fg.onclick=renderReset;
+  async function submit(){
+    const email = document.getElementById('aEmail').value.trim(), pass = document.getElementById('aPass').value;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('Enter a valid email address.');
+    if(signin && !pass) return showErr('Enter your password.');
+    if(!signin && pass.length < 8) return showErr('Use a password with at least 8 characters.');
+    err.style.display = 'none'; busy(true);
+    try{
+      if(signin){
+        const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+        if(error) throw error;
+        sessionUser = data.user || (data.session && data.session.user);
+        await enterApp();
+      } else {
+        const opts = redirectUrl() ? { emailRedirectTo: redirectUrl() } : {};
+        const { data, error } = await sb.auth.signUp({ email, password:pass, options:opts });
+        if(error) throw error;
+        if(data.user && data.user.identities && data.user.identities.length===0) throw new Error('User already registered');
+        if(data.session){ sessionUser = data.session.user; await enterApp(); }
+        else renderCheckEmail(email);
+      }
+    }catch(e){ busy(false); showErr(friendly(e)); }
+  }
+  go_.onclick = submit;
+  ['aEmail','aPass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } }));
+  document.getElementById('aEmail').focus();
+}
+
+function renderReset(){
+  show(authTop()+`<div class="wrap" style="max-width:540px"><h1>Reset your password</h1>
+    <p class="sub">Enter your account email and we'll send a link to choose a new password.</p><div class="card">
+    ${field('rEmail','Email','email','inputmode="email" autocomplete="email"')}
+    <p class="err" id="rErr" style="display:none"></p><div class="sendok" id="rOk" style="display:none"></div>
+    <div class="row" style="margin-top:16px"><button class="btn go" id="rGo">Send reset link</button><button class="btn plain" id="rBack">Back to sign in</button></div></div></div>`);
+  document.getElementById('rBack').onclick=()=>renderAuth('in');
+  document.getElementById('rGo').onclick=async()=>{
+    const email = document.getElementById('rEmail').value.trim(), err = document.getElementById('rErr'), ok = document.getElementById('rOk');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent='Enter a valid email address.'; err.style.display='block'; return; }
+    err.style.display='none';
+    try{
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl() });
+      if(error && (isNetworkErr(error) || /rate|too many/i.test(error.message))) throw error;
+      ok.textContent = "If that email has an account, a reset link is on its way. It can take a few minutes."; ok.style.display='block';
+    }catch(e){ err.textContent = friendly(e); err.style.display='block'; }
+  };
+}
+
+function renderNewPassword(){
+  show(authTop()+`<div class="wrap" style="max-width:540px"><h1>Choose a new password</h1><div class="card">
+    ${field('nPass','New password','password','autocomplete="new-password" placeholder="At least 8 characters"')}
+    ${field('nPass2','Type it again','password','autocomplete="new-password"')}
+    <p class="err" id="nErr" style="display:none"></p>
+    <div class="row" style="margin-top:16px"><button class="btn go" id="nGo">Save password</button></div></div></div>`);
+  document.getElementById('nGo').onclick=async()=>{
+    const a = document.getElementById('nPass').value, b = document.getElementById('nPass2').value, err = document.getElementById('nErr');
+    const bad = m => { err.textContent = m; err.style.display='block'; };
+    if(a.length < 8) return bad('Use a password with at least 8 characters.');
+    if(a !== b) return bad("The two passwords don't match.");
+    try{
+      const { error } = await sb.auth.updateUser({ password:a });
+      if(error) throw error;
+      recovering = false;
+      const { data } = await sb.auth.getSession();
+      if(data && data.session){ sessionUser = data.session.user; await enterApp(); } else renderAuth('in', 'Password updated. Sign in with your new password.');
+    }catch(e){ bad(friendly(e)); }
+  };
+}
+
+function accountCardHTML(confirmOut){
+  if(!account) return '';
+  return `<div class="card"><h2>Account</h2><p style="margin:0;font-weight:700">${esc(account.email||'')}</p><p class="hint" style="margin-top:4px">${esc(trialLine())}</p>
+    <div class="row" style="margin-top:12px">${confirmOut
+      ? `<button class="btn warn" id="signoutYes">Sign out and clear this device</button><button class="btn plain" id="signoutNo">Stay signed in</button>`
+      : `<button class="btn plain" id="signout">Sign out</button>`}</div>
+    <p class="hint">Signing out removes your settings and any saved reports from this device.</p></div>`;
+}
+
+async function boot(){
+  if(!window.supabase || !window.supabase.createClient){ renderConfigError("Couldn't load the sign-in service. Check your internet connection and refresh."); return; }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } });
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event==='PASSWORD_RECOVERY'){ sessionUser = session && session.user; recovering = true; renderNewPassword(); }
+  });
+  renderLoading('Loading...');
+  let res;
+  try{ res = await sb.auth.getSession(); }catch(e){ res = { data:{ session:null } }; }
+  if(recovering) return;
+  const session = res && res.data && res.data.session;
+  if(session){ sessionUser = session.user; await enterApp(); } else renderAuth('in');
+}
+
+/* ---------- teacher setup ---------- */
+function renderSetup(){
+  document.body.className = '';
+  const draft = Object.assign({ band:'k2', unit:'rules', rounds:10, speak:true }, settings || {});
+  let pinErr = '', pinDraft = pin, confirmOut = false;
+  function tile(u){ return `<button class="unit ${draft.unit===u.id?'on':''}" data-unit="${u.id}"><span class="ic">${u.icon}</span><span>${esc(u.name)}${SOL[u.id]?`<small class="sol">${SOL[u.id]}</small>`:''}</span></button>`; }
+  function paint(){
+    const reports = store.get('reports', []);
+    app.innerHTML = top(false) + `<div class="wrap">
+      <h1>Set up the sideline</h1>
+      <p class="sub">Choose a grade band and the unit you're teaching. Each unit lists the Virginia SOL strand or topic it supports.</p>
+      <div class="card"><h2>Grade band</h2><div class="chips">${
+        Object.entries(BANDS).map(([k,v])=>`<button class="chip ${draft.band===k?'on':''}" data-band="${k}">${v}</button>`).join('')}</div></div>
+      <div class="card"><h2>Unit</h2>
+        <div class="group">Physical Education</div><div class="units">${UNITS.filter(u=>u.cat==='PE').map(tile).join('')}</div>
+        <div class="group">Health</div><div class="units">${UNITS.filter(u=>u.cat==='Health').map(tile).join('')}</div>
+        <div class="group">Review mix</div><div class="units">${MIX.map(tile).join('')}</div>
+      </div>
+      <div class="card"><h2>Options</h2>
+        <div class="group" style="margin-top:0">Questions per round</div>
+        <div class="chips">${[5,10,15].map(n=>`<button class="chip ${draft.rounds===n?'on':''}" data-rounds="${n}">${n}</button>`).join('')}</div>
+        <p class="hint">Each unit has 10 questions per grade band. Rounds of 15 add review questions from related units in the same subject.</p>
+        <div class="group">Read questions aloud</div>
+        <div class="chips"><button class="chip ${draft.speak?'on':''}" data-speak="1">On</button><button class="chip ${!draft.speak?'on':''}" data-speak="0">Off</button></div>
+        ${canSpeak?'':'<p class="hint">This browser doesn\'t support read-aloud.</p>'}
+        <div class="group">Teacher PIN</div>
+        <input class="text pinset" id="pinIn" inputmode="numeric" maxlength="4" value="${esc(pinDraft)}" aria-label="Four-digit teacher PIN">
+        <p class="hint">Students need this PIN to get back to setup.</p>
+        ${pinErr?`<p class="err">${pinErr}</p>`:''}
+      </div>
+      ${accountCardHTML(confirmOut)}
+      <div class="row">
+        <button class="btn go" id="start">Start student mode</button>
+        <button class="btn plain" id="reports">Sideline reports (${reports.length})</button>
+      </div>
+    </div>`;
+    app.querySelectorAll('[data-band]').forEach(b=>b.onclick=()=>{ draft.band=b.dataset.band; draft.speak = draft.band==='k2'; paint(); });
+    app.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{ draft.unit=b.dataset.unit; paint(); });
+    app.querySelectorAll('[data-rounds]').forEach(b=>b.onclick=()=>{ draft.rounds=+b.dataset.rounds; paint(); });
+    app.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>{ draft.speak=b.dataset.speak==='1'; paint(); });
+    document.getElementById('start').onclick=()=>{
+      const p = document.getElementById('pinIn').value.trim(); pinDraft = p;
+      if(!/^\d{4}$/.test(p)){ pinErr='Enter a 4-digit PIN.'; paint(); return; }
+      pin = p; store.set('pin', pin);
+      settings = draft; store.set('settings', settings);
+      if(sb && sessionUser) pushSettings(settings, pin).catch(()=>{});
+      go(renderHome);
+    };
+    document.getElementById('reports').onclick=()=>go(renderReports);
+    document.getElementById('pinIn').oninput=e=>{ pinDraft = e.target.value; };
+    const so=document.getElementById('signout'); if(so) so.onclick=()=>{ confirmOut=true; paint(); };
+    const soy=document.getElementById('signoutYes'); if(soy) soy.onclick=doSignOut;
+    const son=document.getElementById('signoutNo'); if(son) son.onclick=()=>{ confirmOut=false; paint(); };
+  }
+  paint();
+}
+
+/* ---------- PIN ---------- */
+function renderPin(onOk){
+  let entry = '';
+  function paint(shake){
+    app.innerHTML = top(false) + `<div class="wrap center">
+      <h1>Teacher PIN</h1><p class="sub">Enter the 4-digit PIN to change settings.</p>
+      <div class="dots ${shake?'shake':''}">${[0,1,2,3].map(i=>`<i class="${i<entry.length?'f':''}"></i>`).join('')}</div>
+      <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join('')}
+        <button id="back" aria-label="Back to student mode">✕</button><button data-n="0">0</button><button id="del" aria-label="Delete">⌫</button></div>
+    </div>`;
+    app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{
+      if(entry.length>=4) return;
+      entry += b.dataset.n;
+      if(entry.length===4){
+        if(entry===pin){ go(onOk); return; }
+        entry=''; paint(true); return;
+      }
+      paint(false);
+    });
+    document.getElementById('del').onclick=()=>{ entry=entry.slice(0,-1); paint(false); };
+    document.getElementById('back').onclick=()=>go(settings?renderHome:renderSetup);
+  }
+  paint(false);
+}
+
+/* ---------- student home ---------- */
+function renderHome(){
+  document.body.className = 'band-'+settings.band;
+  const u = unitInfo(settings.unit);
+  const best = store.get(bestKey(), 0);
+  app.innerHTML = top(true) + `<div class="wrap">
+    <div class="court">
+      <div class="uic">${u.icon}</div>
+      <h1>${esc(u.name)}</h1>
+      <div class="band">${BANDS[settings.band]}</div>
+      ${best?`<div class="best">Your best: ${best} points</div>`:''}
+    </div>
+    <div class="modes">
+      <button class="mode quiz" id="mQuiz"><span class="big">🎯</span><span class="t">Quiz Challenge</span><span class="d">Answer questions and build a streak.</span></button>
+      <button class="mode rep" id="mRep"><span class="big">📝</span><span class="t">Sideline Reporter</span><span class="d">Watch your class and report what you see.</span></button>
+    </div>
+  </div>`;
+  bindGear();
+  document.getElementById('mQuiz').onclick=()=>go(startQuiz);
+  document.getElementById('mRep').onclick=()=>go(startReporter);
+}
+
+/* ---------- quiz ---------- */
+function toQ(u,x,extra){ return { q:x[0], correct:x[1], opts:shuffle([x[1]].concat(x[2])), exp:x[3], unit:u.name, icon:u.icon, extra:!!extra }; }
+function startQuiz(){
+  const band = settings.band, main = unitsFor(settings.unit);
+  const pool = [];
+  main.forEach(u => (u.q[band]||[]).forEach(x => pool.push(toQ(u,x,false))));
+  // rotate: questions not seen recently come first, so replays feel fresh
+  const key = 'seen_'+band+'_'+settings.unit;
+  let seen = new Set(store.get(key, []));
+  if(pool.every(q=>seen.has(q.q))) seen = new Set();
+  const ordered = shuffle(pool).sort((a,b)=>(seen.has(a.q)?1:0)-(seen.has(b.q)?1:0));
+  let qs = ordered.slice(0, settings.rounds);
+  // top up long rounds with related units from the same subject
+  if(qs.length < settings.rounds && main.length===1){
+    const cat = main[0].cat;
+    const extra = [];
+    UNITS.filter(u=>u.cat===cat && u.id!==main[0].id).forEach(u=>(u.q[band]||[]).forEach(x=>extra.push(toQ(u,x,true))));
+    qs = qs.concat(shuffle(extra).slice(0, settings.rounds-qs.length));
+  }
+  qs.forEach(q=>{ if(!q.extra) seen.add(q.q); });
+  store.set(key, Array.from(seen));
+  quiz = { qs, i:0, score:0, pts:0, streak:0, results:[], answered:false, pick:null, spoken:false };
+  renderQuiz();
+}
+function readQuestion(cur){ speak(cur.q + '. ' + cur.opts.map((o,k)=>'ABCD'[k]+'. '+o).join('. ')); }
+function renderQuiz(){
+  const Q = quiz, cur = Q.qs[Q.i], mix = settings.unit.startsWith('mix');
+  const right = Q.answered && cur.opts[Q.pick]===cur.correct;
+  const track = Q.qs.map((_,k)=>`<i class="${k<Q.results.length?(Q.results[k]?'ok':'no'):(k===Q.i?'now':'')}"></i>`).join('');
+  const answers = cur.opts.map((o,k)=>{
+    let c = '';
+    if(Q.answered){ c = o===cur.correct ? 'right' : (k===Q.pick ? 'wrong' : 'dim'); }
+    return `<button class="ans a${k%4} ${c}" data-k="${k}" ${Q.answered?'disabled':''}><span class="spot">${'ABCD'[k]}</span><span>${esc(o)}</span></button>`;
+  }).join('');
+  const last = Q.i===Q.qs.length-1;
+  app.innerHTML = top(true) + `<div class="wrap">
+    <div class="qbar"><span>Question ${Q.i+1} of ${Q.qs.length}</span><span>${Q.pts} points${Q.streak>=2?` <span class="streak">🔥 ${Q.streak} in a row</span>`:''}</span></div>
+    <div class="track">${track}</div>
+    <div class="card qcard">
+      <div class="qhead"><div>${(mix||cur.extra)?`<span class="qtag">${cur.extra?'Review: ':''}${cur.icon} ${esc(cur.unit)}</span>`:''}<p class="qtext">${esc(cur.q)}</p></div>
+      ${canSpeak?`<button class="speak" id="say" aria-label="Read question aloud">🔊</button>`:''}</div>
+      <div class="answers">${answers}</div>
+      ${Q.answered?`<div class="feedback ${right?'good':'bad'}"><strong>${right?['Nice!','You got it!','Great job!','Awesome!'][Q.i%4]:'Not quite.'}</strong>${right?'':'The answer is '+esc(cur.correct)+'. '}${esc(cur.exp)}</div>
+        <div class="row nextrow"><button class="btn blue" id="next">${last?'See my results':'Next question'}</button></div>`:''}
+    </div>
+  </div>`;
+  bindGear();
+  const say = document.getElementById('say'); if(say) say.onclick=()=>readQuestion(cur);
+  app.querySelectorAll('.ans').forEach(b=>b.onclick=()=>answer(+b.dataset.k));
+  const nx = document.getElementById('next'); if(nx){ nx.onclick=nextQ; nx.focus({preventScroll:true}); }
+  if(!Q.answered && settings.speak && !Q.spoken){ Q.spoken = true; readQuestion(cur); }
+}
+function answer(k){
+  const Q = quiz, cur = Q.qs[Q.i]; if(Q.answered) return;
+  Q.answered = true; Q.pick = k;
+  const ok = cur.opts[k]===cur.correct;
+  Q.results.push(ok);
+  if(ok){ Q.score++; Q.streak++; Q.pts += 10 + (Q.streak>=3?5:0); } else { Q.streak = 0; }
+  renderQuiz();
+  if(settings.speak) speak((ok?'Correct! ':'Not quite. The answer is '+cur.correct+'. ')+cur.exp);
+}
+function nextQ(){
+  const Q = quiz; stopSpeak();
+  Q.i++; Q.answered=false; Q.pick=null; Q.spoken=false;
+  if(Q.i>=Q.qs.length) go(renderResult); else { renderQuiz(); window.scrollTo(0,0); }
+}
+function renderResult(){
+  const Q = quiz, n = Q.qs.length, pct = Q.score/n;
+  const stars = pct>=0.9?3:pct>=0.7?2:pct>=0.4?1:0;
+  const prev = store.get(bestKey(), 0), isBest = Q.pts>prev;
+  if(isBest) store.set(bestKey(), Q.pts);
+  const msg = ["Every expert started somewhere. Try another round!","Nice effort! Play again to beat your score.","Great work! You're almost a pro.","Superstar! You really know your stuff."][stars];
+  const u = unitInfo(settings.unit);
+  app.innerHTML = top(true) + `<div class="wrap"><div class="card center" style="padding:30px 20px">
+    <div class="stars">${[0,1,2].map(i=>`<span class="${i<stars?'':'off'}">⭐</span>`).join('')}</div>
+    <div class="scoreline">${Q.score} of ${n} correct</div>
+    <p class="sub" style="margin:6px 0 0">${Q.pts} points. ${msg}</p>
+    ${isBest?`<div class="newbest">New personal best!</div>`:''}
+  </div>
+  <div class="row"><button class="btn go" id="again">Play again</button><button class="btn blue" id="toRep">Sideline Reporter</button><button class="btn plain" id="home">Home</button></div>
+  ${sendBoxHTML('qz','')}
+  </div>`;
+  bindGear();
+  if(settings.speak) speak(Q.score+' of '+n+' correct. '+msg);
+  document.getElementById('again').onclick=()=>go(startQuiz);
+  document.getElementById('toRep').onclick=()=>go(startReporter);
+  document.getElementById('home').onclick=()=>go(renderHome);
+  bindSendBox('qz',
+    name => `Bench Boost results: ${name}`,
+    name => [
+      `Student: ${name}`,
+      `Unit: ${u.name} (${BANDS[settings.band]})`,
+      `Score: ${Q.score} of ${n} correct`,
+      `Points: ${Q.pts}`,
+      `Date: ${new Date().toLocaleString([], {dateStyle:'medium', timeStyle:'short'})}`
+    ].join('\n')
+  );
+}
+
+/* ---------- sideline reporter ---------- */
+function startReporter(){
+  const list = PROMPTS[settings.band];
+  rep = { step:-1, name:'', items:[], picks:shuffle(list).slice(0,3) };
+  renderReporter();
+}
+function renderReporter(){
+  const R = rep, k2 = settings.band==='k2';
+  if(R.step===-1){
+    app.innerHTML = top(true) + `<div class="wrap"><div class="card">
+      <h1>Sideline Reporter</h1><p class="sub">You'll watch your class and answer 3 quick questions about what you see.</p>
+      <label for="nm" style="font-weight:700">Your first name</label>
+      <input class="text" id="nm" maxlength="30" autocomplete="off" style="margin-top:8px" placeholder="Type your first name">
+      <div class="row" style="margin-top:16px"><button class="btn go" id="begin">Start reporting</button><button class="btn plain" id="home">Home</button></div>
+    </div></div>`;
+    bindGear();
+    if(settings.speak) speak("Sideline Reporter. Type your first name, then start reporting.");
+    document.getElementById('begin').onclick=()=>{ R.name=document.getElementById('nm').value.trim(); R.step=0; go(renderReporter); };
+    document.getElementById('home').onclick=()=>go(renderHome);
+    return;
+  }
+  if(R.step>=R.picks.length){
+    const reportTime = Date.now();
+    const reports = store.get('reports', []);
+    reports.unshift({ t:reportTime, name:R.name, band:settings.band, unit:unitInfo(settings.unit).name, items:R.items });
+    store.set('reports', reports.slice(0,200));
+    app.innerHTML = top(true) + `<div class="wrap"><div class="card center" style="padding:30px 20px">
+      <div style="font-size:60px">📝</div><h1>Report saved</h1><p class="sub">Great observing${R.name?', '+esc(R.name):''}! Your teacher can read it here on this device, or you can email it below.</p></div>
+      <div class="row"><button class="btn blue" id="toQuiz">Quiz Challenge</button><button class="btn go" id="again">New report</button><button class="btn plain" id="home">Home</button></div>
+      ${sendBoxHTML('rep', R.name)}
+      </div>`;
+    bindGear();
+    if(settings.speak) speak("Report saved. Great observing!");
+    document.getElementById('toQuiz').onclick=()=>go(startQuiz);
+    document.getElementById('again').onclick=()=>go(startReporter);
+    document.getElementById('home').onclick=()=>go(renderHome);
+    bindSendBox('rep',
+      name => `Bench Boost Sideline Report: ${name}`,
+      name => [
+        `Student: ${name}`,
+        `Unit: ${unitInfo(settings.unit).name} (${BANDS[settings.band]})`,
+        `Date: ${new Date(reportTime).toLocaleString([], {dateStyle:'medium', timeStyle:'short'})}`,
+        '',
+        ...R.items.flatMap(it => [it.p, it.a, ''])
+      ].join('\n'),
+      () => { store.set('reports', store.get('reports', []).filter(r => r.t !== reportTime)); }
+    );
+    return;
+  }
+  const P = R.picks[R.step];
+  const promptText = k2 ? P.p : P;
+  const dots = R.picks.map((_,i)=>`<i class="${i<R.step?'done':''}"></i>`).join('');
+  app.innerHTML = top(true) + `<div class="wrap"><div class="card">
+    <div class="stepdots">${dots}</div>
+    <div class="qhead"><p class="qtext">${esc(promptText)}</p>${canSpeak?`<button class="speak" id="say" aria-label="Read aloud">🔊</button>`:''}</div>
+    ${k2 ? `<div class="choices">${P.c.map((c,i)=>`<button class="emo" data-i="${i}">${esc(c)}</button>`).join('')}</div>`
+         : `<textarea id="obs" style="margin-top:16px" placeholder="Write what you see..."></textarea>
+            <div class="row" style="margin-top:14px"><button class="btn go" id="save">Save and continue</button><button class="btn plain" id="skip">Skip this one</button></div>`}
+  </div></div>`;
+  bindGear();
+  const say = document.getElementById('say'); if(say) say.onclick=()=>speak(promptText + (k2 ? '. ' + P.c.join('. ') : ''));
+  if(settings.speak) speak(promptText + (k2 ? '. ' + P.c.join('. ') : ''));
+  const advance = a=>{ R.items.push({ p:promptText, a }); R.step++; go(renderReporter); };
+  if(k2){ app.querySelectorAll('.emo').forEach(b=>b.onclick=()=>advance(P.c[+b.dataset.i])); }
+  else{
+    document.getElementById('save').onclick=()=>{ const v=document.getElementById('obs').value.trim(); advance(v||'(no answer)'); };
+    document.getElementById('skip').onclick=()=>advance('(skipped)');
+  }
+}
+
+/* ---------- teacher: reports ---------- */
+function renderReports(){
+  let confirmClear = false;
+  function paint(){
+    const reports = store.get('reports', []);
+    const list = reports.length ? reports.map(r=>`<div class="rep-item">
+        <div class="who">${esc(r.name||'No name')}</div>
+        <div class="meta">${new Date(r.t).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}. ${esc(BANDS[r.band]||'')}, ${esc(r.unit)}</div>
+        <dl>${r.items.map(it=>`<dt>${esc(it.p)}</dt><dd>${esc(it.a)}</dd>`).join('')}</dl></div>`).join('')
+      : `<div class="card"><p class="sub" style="margin:0">No reports yet. Reports appear here after a student finishes Sideline Reporter on this device.</p></div>`;
+    app.innerHTML = top(false) + `<div class="wrap">
+      <h1>Sideline reports</h1><p class="sub">Saved on this device only. Newest first.</p>
+      ${list}
+      <div class="row" style="margin-top:8px">
+        <button class="btn plain" id="back">Back to setup</button>
+        ${reports.length ? (confirmClear
+          ? `<button class="btn warn" id="yes">Delete all ${reports.length} reports</button><button class="btn plain" id="no">Keep them</button>`
+          : `<button class="btn plain" id="clear" style="color:var(--red)">Clear reports</button>`) : ''}
+      </div></div>`;
+    document.getElementById('back').onclick=()=>go(renderSetup);
+    const c=document.getElementById('clear'); if(c) c.onclick=()=>{ confirmClear=true; paint(); };
+    const y=document.getElementById('yes'); if(y) y.onclick=()=>{ store.set('reports', []); confirmClear=false; paint(); };
+    const n=document.getElementById('no'); if(n) n.onclick=()=>{ confirmClear=false; paint(); };
+  }
+  paint();
+}
+
+/* ---------- start ---------- */
+boot();
+})();
+</script>
+</body>
+</html>
