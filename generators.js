@@ -25,6 +25,9 @@ function numW(c,cands,f){
   for(let k=1;out.length<3&&k<20;k++){ [c+st*k,c-st*k].forEach(v=>{ if(v>0&&!used.has(v)&&out.length<3){ used.add(v); out.push(v); } }); }
   return out.slice(0,3).map(f);
 }
+/* "a" or "an" in front of a phrase, so generated wording reads correctly ("an invasion game", "an unsafe choice").
+   A phrase that already starts with "not" (for example "not a good choice") gets no article. */
+function withA(s){ return /^not /i.test(s) ? s : (/^[aeiou]/i.test(s) ? 'an ' : 'a ') + s; }
 const lc = c => c.toLowerCase();
 
 /* Category sets: power "Sort It", "Which one is...?" and "Which group...?" questions */
@@ -38,7 +41,7 @@ const CATSETS = [
   'Protein foods':['chicken','eggs','beans','fish','turkey','tofu','peanut butter','almonds','lean beef','lentils'],
   'Dairy':['milk','cheese','yogurt','string cheese','cottage cheese','chocolate milk']}},
 {id:'CAT-MOV-K2-G35', unit:'move', bands:['k2','g35'],
- ask:c=>`Which one is a ${lc(c.split(' ')[0])} skill?`, askItem:it=>`What kind of skill is "${it}"?`, exp:(it,c)=>`${cap(it)} is a ${lc(c.split(' ')[0])} skill.`,
+ ask:c=>`Which one is ${withA(lc(c.split(' ')[0]))} skill?`, askItem:it=>`What kind of skill is "${it}"?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c.split(' ')[0]))} skill.`,
  cats:{
   'Locomotor (traveling)':['walk','run','hop','jump','skip','gallop','slide','leap'],
   'Non-locomotor (in place)':['bend','stretch','twist','shake','curl','sway','reach','balance'],
@@ -50,7 +53,7 @@ const CATSETS = [
   'Effort':['fast','slow','strong','light','smooth','jerky','sudden','sustained'],
   'Relationships':['leading','following','mirroring','matching','over','under','around','beside']}},
 {id:'CAT-SPT-G35-G68-G912', unit:'sports', bands:['g35','g68','g912'],
- ask:c=>`Which of these is a ${lc(c)} game?`, askItem:it=>`What type of game is ${it}?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)} game.`,
+ ask:c=>`Which of these is ${withA(lc(c))} game?`, askItem:it=>`What type of game is ${it}?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))} game.`,
  cats:{
   'Invasion':['soccer','basketball','hockey','lacrosse','flag football','ultimate'],
   'Net/wall':['volleyball','tennis','badminton','pickleball','table tennis','racquetball'],
@@ -80,22 +83,22 @@ const CATSETS = [
   'Lowers your risk of illness':['getting recommended vaccines','washing hands with soap','cooking meat to a safe temperature','covering coughs','staying home when contagious','cleaning shared equipment'],
   'Raises your risk of illness':['sharing towels or razors','eating undercooked chicken','skipping recommended vaccines','not washing hands after the bathroom','going to school sick','leaving food out overnight']}},
 {id:'CAT-SAF-K2-G35', unit:'safety', bands:['k2','g35'],
- ask:c=>`Which one is a ${lc(c)}?`, askItem:it=>`Is "${it}" a safe or unsafe choice?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)}.`,
+ ask:c=>`Which one is ${withA(lc(c))}?`, askItem:it=>`Is "${it}" a safe or unsafe choice?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))}.`,
  cats:{
   'Safe choice':['wearing a helmet on a bike','buckling your seatbelt','looking both ways before crossing','swimming with an adult watching','putting on sunscreen','telling a trusted adult if you feel lost','staying with your group on a field trip'],
   'Unsafe choice':['riding a bike without a helmet','running into the street','playing with matches','swimming alone','going somewhere with a stranger','sharing your address online','touching a hot stove']}},
 {id:'CAT-SAF-G68-G912', unit:'safety', bands:['g68','g912'],
- ask:c=>`Which one is a ${lc(c)}?`, askItem:it=>`Is "${it}" a safe or risky choice?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)}.`,
+ ask:c=>`Which one is ${withA(lc(c))}?`, askItem:it=>`Is "${it}" a safe or risky choice?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))}.`,
  cats:{
   'Safe choice':['checking the scene is safe before helping','warming up before sports','wearing a helmet while cycling','stopping play after a head injury','drinking water in hot weather','keeping your location private online','putting your phone away while walking in traffic'],
   'Risky choice':['playing through a head injury','texting while driving','posting your live location publicly','skipping the warm-up','ignoring signs of heat exhaustion','riding with a driver who has been drinking','sharing passwords with friends']}},
 {id:'CAT-MEN-K2', unit:'mental', bands:['k2'],
- ask:c=>`Which one is a ${lc(c)} when you feel mad or sad?`, askItem:it=>`When you feel mad or sad, is "${it}" a good choice?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)}.`,
+ ask:c=>`Which one is ${withA(lc(c))} when you feel mad or sad?`, askItem:it=>`When you feel mad or sad, is "${it}" a good choice?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))}.`,
  cats:{
   'Good choice':['taking deep breaths','asking a grown-up for help','counting to ten','drawing how you feel','taking a quiet break','talking about it'],
   'Not a good choice':['hitting','yelling at a friend','throwing things','running away','saying mean things','keeping it a secret forever']}},
 {id:'CAT-MEN-G35-G68', unit:'mental', bands:['g35','g68'],
- ask:c=>`Which one is a ${lc(c)} with stress?`, askItem:it=>`Is "${it}" a healthy or unhealthy way to cope with stress?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)} with stress.`,
+ ask:c=>`Which one is ${withA(lc(c))} with stress?`, askItem:it=>`Is "${it}" a healthy or unhealthy way to cope with stress?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))} with stress.`,
  cats:{
   'Healthy way to cope':['taking slow deep breaths','talking to a trusted adult','going for a walk','writing in a journal','taking a short break','listening to calm music','asking a friend for help'],
   'Unhealthy way to cope':['yelling at people','keeping all your feelings inside','giving up on everything','lashing out at friends','ignoring your feelings for weeks','blaming everyone else','staying up all night worrying']}},
@@ -125,12 +128,12 @@ const CATSETS = [
   'Kind and respectful':['using calm words','including someone new','telling an adult about bullying','apologizing','listening to both sides','standing up for someone safely'],
   'Hurtful':['spreading rumors','leaving someone out on purpose','name-calling','pushing','sending mean messages',"laughing at someone's mistake",'threatening someone']}},
 {id:'CAT-SUB-K2', unit:'substance', bands:['k2'],
- ask:c=>`Which one is a ${lc(c)}?`, askItem:it=>`Is "${it}" a safe or unsafe choice?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)}.`,
+ ask:c=>`Which one is ${withA(lc(c))}?`, askItem:it=>`Is "${it}" a safe or unsafe choice?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))}.`,
  cats:{
   'Safe choice':['taking medicine only from a trusted adult','asking a grown-up before taking anything','staying away from smoke','telling an adult if you find pills','reading the label with a grown-up','washing hands after touching medicine'],
   'Unsafe choice':["taking a friend's medicine",'eating pills you find','tasting cleaning products','playing with medicine bottles','breathing in smoke on purpose','taking medicine without asking']}},
 {id:'CAT-SUB-G35-G68-G912', unit:'substance', bands:['g35','g68','g912'],
- ask:c=>`Which one is a ${lc(c)}?`, askItem:it=>`Is "${it}" a safe or unsafe choice?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)}.`,
+ ask:c=>`Which one is ${withA(lc(c))}?`, askItem:it=>`Is "${it}" a safe or unsafe choice?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))}.`,
  cats:{
   'Safe choice':['taking medicine only from a trusted adult','reading the label first','saying no to a vape','choosing water','asking a doctor before taking anything','telling an adult about found pills'],
   'Unsafe choice':["taking someone else's medicine",'trying a vape','mixing medicines','taking extra to feel better faster','eating pills you found','breathing in fumes on purpose']}},
@@ -140,7 +143,7 @@ const CATSETS = [
   'Helps the environment':['recycling','turning off lights','picking up litter','taking short showers','walking or biking','planting trees','reusing bottles'],
   'Harms the environment':['littering','leaving the water running','idling a car for a long time','wasting food','dumping trash in a stream','buying lots of single-use plastic']}},
 {id:'CAT-HAB-K2-G35-G68-G912', unit:'habits', bands:['k2','g35','g68','g912'],
- ask:c=>`Which one is a ${lc(c)}?`, askItem:it=>`Is "${it}" a healthy or unhealthy habit?`, exp:(it,c)=>`${cap(it)} is a ${lc(c)}.`,
+ ask:c=>`Which one is ${withA(lc(c))}?`, askItem:it=>`Is "${it}" a healthy or unhealthy habit?`, exp:(it,c)=>`${cap(it)} is ${withA(lc(c))}.`,
  cats:{
   'Healthy habit':['going to bed at the same time','brushing your teeth twice a day','turning screens off before bed','drinking water','eating breakfast','visiting the dentist','getting regular checkups'],
   'Unhealthy habit':['staying up all night','skipping brushing','using screens in bed','drinking only soda','skipping checkups','sleeping with the TV on']}},

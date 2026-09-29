@@ -37,8 +37,10 @@ function genFor(){
   unitsFor(play.unit).forEach(function(u){ ((GEN[u.id] || {})[play.band] || []).forEach(function(t){ out.push({ u:u, t:t }); }); });
   return out;
 }
-/* Draw n questions for the current unit and grade band. lazy=true delays "seen" marking until each is shown. */
-function draw(n, lazy){
+/* Draw n questions for the current unit and grade band. lazy=true delays "seen" marking until each is shown.
+   strict=true (Student Explore) draws ONLY from the chosen topic: it never tops up from other units, and it never repeats a
+   question within the round. If the topic cannot supply n different questions it returns fewer instead of padding. */
+function draw(n, lazy, strict){
   const band = play.band, main = unitsFor(play.unit), stat = [];
   main.forEach(function(u){ bankFor(u.id, band).forEach(function(r){ stat.push(toQ(u, r, false)); }); });
   const gens = genFor(), k = seenKey();
@@ -51,9 +53,9 @@ function draw(n, lazy){
   const add = function(q){ if(texts.has(q.q)) return false; texts.add(q.q); chosen.push(q); return true; };
   shuffle(unseen).slice(0, n - wantGen).forEach(add);
   let guard = 0;
-  while(chosen.length < n && gens.length && guard++ < n * 30){ const g = pick(gens); add(toGenQ(g.u, g.t, g.t.fn())); }
+  while(chosen.length < n && gens.length && guard++ < n * (strict ? 150 : 30)){ const g = pick(gens); add(toGenQ(g.u, g.t, g.t.fn())); }
   if(chosen.length < n) shuffle(stat).forEach(function(q){ if(chosen.length < n) add(q); });
-  if(chosen.length < n && main.length === 1){
+  if(!strict && chosen.length < n && main.length === 1){
     const extra = [];
     UNITS.filter(function(u){ return u.cat === main[0].cat && u.id !== main[0].id; }).forEach(function(u){ bankFor(u.id, band).forEach(function(r){ extra.push(toQ(u, r, true)); }); });
     shuffle(extra).forEach(function(q){ if(chosen.length < n) add(q); });
@@ -63,9 +65,13 @@ function draw(n, lazy){
 }
 
 /* ---------- quiz ---------- */
-function startQuiz(){
-  const qs = draw(play.rounds);
-  quiz = { qs, i:0, score:0, pts:0, streak:0, results:[], answered:false, pick:null, spoken:false };
+/* opts is used by Student Explore only: { kind:'quick10'|'challenge'|'mastery', n:<questions>, strict:true }.
+   With no opts this is the Teacher Kiosk's Quiz Challenge, using the teacher's configured round count, exactly as before. */
+function startQuiz(opts){
+  opts = opts || {};
+  const want = opts.n || play.rounds;
+  const qs = draw(want, false, !!opts.strict);
+  quiz = { qs, i:0, score:0, pts:0, streak:0, results:[], answered:false, pick:null, spoken:false, kind:opts.kind || 'quiz', want:want, opts:opts };
   renderQuiz();
 }
 function readQuestion(cur){ speak(cur.q + '. ' + cur.opts.map((o,k)=>'ABCD'[k]+'. '+o).join('. ')); }
@@ -80,7 +86,8 @@ function renderQuiz(){
   }).join('');
   const last = Q.i===Q.qs.length-1;
   view.html = topBar(true) + `<div class="wrap">
-    <div class="qbar"><span>Question ${Q.i+1} of ${Q.qs.length}</span><span>${Q.pts} points${Q.streak>=2?` <span class="streak">🔥 ${Q.streak} in a row</span>`:''}</span></div>
+    <div class="qbar"><span>Question ${Q.i+1} of ${Q.qs.length}</span>${Q.kind==='quiz' ? `<span>${Q.pts} points${Q.streak>=2?` <span class="streak">🔥 ${Q.streak} in a row</span>`:''}</span>` : `<span class="modechip">${esc(quizLabel(Q))}</span>`}</div>
+    ${Q.kind!=='quiz' && Q.i===0 && Q.qs.length<Q.want ? `<p class="sub shortnote">This topic has ${Q.qs.length} different questions for your grade, so this round has ${Q.qs.length}.</p>` : ''}
     <div class="track">${track}</div>
     <div class="card qcard">
       <div class="qhead"><div>${(mix||cur.extra)?`<span class="qtag">${cur.extra?'Review: ':''}${cur.icon} ${esc(cur.unit)}</span>`:''}<p class="qtext" tabindex="-1"><span class="sr-only">Question ${Q.i+1} of ${Q.qs.length}. </span>${esc(cur.q)}</p></div>
@@ -111,7 +118,10 @@ function nextQ(){
   Q.i++; Q.answered=false; Q.pick=null; Q.spoken=false;
   if(Q.i>=Q.qs.length) go(renderResult); else { renderQuiz(); window.scrollTo(0,0); }
 }
+/* the short name shown while playing a Student Explore round */
+function quizLabel(Q){ return Q.kind==='quick10' ? 'Quick 10' : Q.kind==='challenge' ? 'Challenge ' + Q.qs.length : Q.kind==='mastery' ? 'Mastery' : 'Quiz'; }
 function renderResult(){
+  if(quiz.kind !== 'quiz'){ renderExploreResult(); return; }      /* Student Explore rounds have their own results screen (explore.js) */
   const Q = quiz, n = Q.qs.length, pct = Q.score/n;
   const stars = pct>=0.9?3:pct>=0.7?2:pct>=0.4?1:0;
   const prev = store.get(bestKey(), 0), isBest = Q.pts>prev;

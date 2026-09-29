@@ -304,4 +304,43 @@
   .band-k2 .tname2{ font-size:21px; }
   .band-k2 .gradeline{ margin-bottom:22px; }
 
+
+  /* =====================================================================
+     Phase 2B: the suggested learning path (Learn -> Quick 10 -> Challenge 20 -> Mastery), the Mastered badge,
+     Learn cards, and Student Explore results. Same rules as Phase 2A: local layout fixes, no global type shrinking.
+     ===================================================================== */
+  .path{ list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+  .pstep{ position:relative; display:grid; grid-template-columns:36px minmax(0,1fr); gap:12px; align-items:center; }
+  .pstep > :last-child{ min-width:0; }
+  .pnum{ display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:var(--bar); color:#FFFFFF; font-family:var(--head); font-weight:800; font-size:18px; }
+  .pstep:not(:last-child)::after{ content:""; position:absolute; left:17px; top:calc(50% + 22px); height:calc(100% - 22px); width:2px; background:var(--line); }   /* decorative connector; nothing is locked */
+  .act.quick10 .aicon{ background:var(--blue); } .act.challenge .aicon{ background:var(--orange); } .act.mastery .aicon{ background:var(--bar); }
+  .mbadge{ display:inline-block; margin-top:6px; padding:2px 12px; border-radius:99px; background:var(--goodbg); color:var(--goodink); font-weight:700; font-size:14px; }
+  .herobadge{ position:relative; margin-top:10px; }
+  .modechip{ padding:2px 12px; border-radius:99px; background:var(--soft); font-size:15px; }
+  .shortnote{ margin:0 0 12px; font-size:16px; }
+  .ask{ margin:14px 0 0; font-family:var(--head); font-weight:800; font-size:22px; }
+
+  /* Learn cards */
+  .lcard{ padding:22px 20px; }
+  .licon{ font-size:52px; line-height:1; }
+  .ltitle{ margin:8px 0 12px; }
+  .lbody p{ margin:0 0 10px; font-size:20px; line-height:1.45; overflow-wrap:break-word; }
+  .lbody p:last-child{ margin-bottom:0; }
+  .lnav{ margin-top:14px; }
+  .explore .row + .row{ margin-top:12px; }   /* stacked result buttons need breathing room */
+  .lnav .btn[disabled]{ opacity:.45; cursor:default; }
+  .band-k2 .licon{ font-size:72px; }
+  .band-k2 .lbody p{ font-size:28px; line-height:1.35; margin-bottom:14px; }
+  .band-k2 .ask{ font-size:26px; }
+  .band-k2 .pnum{ width:44px; height:44px; font-size:22px; }
+  .band-k2 .pstep{ grid-template-columns:44px minmax(0,1fr); }
+  .band-k2 .pstep:not(:last-child)::after{ left:21px; }
+  /* narrow phones, K-2: the numbered path leaves the big Learn tile very little width, so drop its decorative arrow and tighten
+     its padding (layout only; the text stays large) */
+  @media (max-width:400px){
+    .band-k2 .pstep .actmain{ grid-template-columns:auto minmax(0,1fr); padding:16px 14px; gap:12px; }
+    .band-k2 .pstep .agot{ display:none; }
+  }
+
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }

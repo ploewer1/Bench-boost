@@ -16,8 +16,10 @@
  * Navigation uses the browser's own history (history.pushState + one popstate listener), so the browser Back button
  * walks up the same map the on-screen Back button does and never drops a student out of the app mid-way.
  *
- * ACTIVITIES (below) is where Phase 2B adds Learn / Quick 10 / Challenge 20 / Mastery. Each activity carries a
- * `tier` and goes through activityState(), so a future free/pro lock is a one-line change, not a redesign.
+ * A topic page suggests a path (not enforced, nothing is locked): 1 Learn -> 2 Quick 10 -> 3 Challenge 20 -> 4 Mastery, then
+ * More ways to practice (Lightning Round, Fact Check, Sort It). ACTIVITIES (below) defines them. Each carries a `tier` and
+ * goes through activityState(), so a future free/pro lock is a one-line change, not a redesign.
+ * Quick 10, Challenge 20 and Mastery are NOT separate engines: they call startQuiz() (quiz.js) with a question count.
  */
 
 let exploreOn = false;                 /* true while a Student Explore screen (or an activity opened from one) is showing */
@@ -48,21 +50,33 @@ function setBandClass(band){ document.body.className = band ? 'band-' + band : '
 function topicHasContent(t, band){ return t.units.some(function(u){ return bankFor(u, band).length > 0 || !!((GEN[u] || {})[band]); }); }
 function topicsFor(subject, band){ return TOPICS.filter(function(t){ return t.subject === subject && topicHasContent(t, band); }); }
 
-/* The play context Explore hands to the game engines. Timer and questions-per-round come from the teacher's saved
-   settings on this device (so the timer accessibility option still applies); read-aloud is on for K-2. */
-function exploreCtx(unitId){
+/* Questions per round for the practice games in Student Explore. FIXED: Explore never inherits the round count a teacher
+   saved for the kiosk. (Quick 10 / Challenge 20 / Mastery set their own counts, below.) */
+const EXPLORE_ROUNDS = 10, QUICK_N = 10, CHALLENGE_N = 20;
+
+/* The play context Explore hands to the game engines. Only the timer option (an accessibility setting) is taken from
+   the teacher's saved settings on this device; read-aloud is on for K-2. */
+function exploreCtx(unitId, topicId){
   const band = exploreBand(), saved = settings || {};
-  return { band:band, unit:unitId, rounds:saved.rounds || 10, speak:band === 'k2', timer:saved.timer || 'normal', explore:true };
+  return { band:band, unit:unitId, topic:topicId || null, rounds:EXPLORE_ROUNDS, speak:band === 'k2', timer:saved.timer || 'normal', explore:true };
 }
 
 /* ---------- activities offered on a topic page ----------
-   role "primary" is shown large; "practice" tiles sit under "More ways to practice".
-   tier is "free" for everything today. Phase 2B adds entries here (learn, quick10, challenge20, mastery). */
+   role "learn" and "test" form the suggested path (step 1-4); role "practice" tiles sit under "More ways to practice".
+   tier is "free" for everything today. text(t, band, k2) may build the description from the topic. */
 const ACTIVITIES = [
-  { id:'quiz',      role:'primary',  el:'mQuiz', icon:'🎯', name:'Quiz',            tier:'free', desc:'Answer questions and learn why each answer is right.', descK2:'Answer questions.', available:function(){ return true; },                              start:function(){ startQuiz(); } },
-  { id:'lightning', role:'practice', el:'mLr',   icon:'⚡', name:'Lightning Round', tier:'free', desc:'Answer as many as you can before time runs out.',       descK2:'Race the clock.',   available:function(){ return true; },                              start:function(){ startLightning(); } },
-  { id:'fact',      role:'practice', el:'mFact', icon:'🕵️', name:'Fact Check',      tier:'free', desc:'Someone gave an answer. Is it right or wrong?',         descK2:'Right or wrong?',   available:function(){ return true; },                              start:function(){ startFact(); } },
-  { id:'sort',      role:'practice', el:'mSort', icon:'🗂️', name:'Sort It',         tier:'free', desc:'Put each one in the right group.',                      descK2:'Put it in a group.', available:function(){ return sortSetsFor(play.band).length > 0; }, start:function(){ startSort(); } }
+  { id:'learn',     role:'learn',    step:1, el:'mLearn',     icon:'📖', name:'Learn',           tier:'free',
+    text:function(t, band, k2){ const n = learnFor(t.id, band).length; return k2 ? 'Read and learn.' : n + ' short cards. Learn the key ideas first.'; },
+    available:function(t, band){ return learnFor(t.id, band).length > 0; }, start:function(t){ startLearn(t); } },
+  { id:'quick10',   role:'test',     step:2, el:'mQuick',     icon:'🎯', name:'Quick 10',        tier:'free', desc:'Ten questions. See why after each one.', descK2:'Ten questions.',
+    available:function(){ return true; }, start:function(){ startQuiz({ kind:'quick10', n:QUICK_N, strict:true }); } },
+  { id:'challenge', role:'test',     step:3, el:'mChallenge', icon:'🏅', name:'Challenge 20',    tier:'free', desc:'Twenty questions. A longer round.', descK2:'Twenty questions.',
+    available:function(){ return true; }, start:function(){ startQuiz({ kind:'challenge', n:CHALLENGE_N, strict:true }); } },
+  { id:'mastery',   role:'test',     step:4, el:'mMastery',   icon:'🏆', name:'Mastery', nameK2:'Master It', tier:'free', desc:'Score ' + MASTERY_PERCENT + '% to master this topic.', descK2:'Get 8 out of 10.',
+    available:function(){ return true; }, start:function(t){ renderMasteryIntro(t); } },
+  { id:'lightning', role:'practice', el:'mLr',   icon:'⚡', name:'Lightning Round', tier:'free', desc:'Answer as many as you can before time runs out.', descK2:'Race the clock.',   available:function(){ return true; },                              start:function(){ startLightning(); } },
+  { id:'fact',      role:'practice', el:'mFact', icon:'🕵️', name:'Fact Check',      tier:'free', desc:'Someone gave an answer. Is it right or wrong?',   descK2:'Right or wrong?',   available:function(){ return true; },                              start:function(){ startFact(); } },
+  { id:'sort',      role:'practice', el:'mSort', icon:'🗂️', name:'Sort It',         tier:'free', desc:'Put each one in the right group.',                descK2:'Put it in a group.', available:function(){ return sortSetsFor(play.band).length > 0; }, start:function(){ startSort(); } }
 ];
 /* "open" today. Later: return "locked" for pro-only activities and the buttons render with a lock and explanation. */
 function activityState(a){ return 'open'; }
@@ -224,56 +238,150 @@ function renderSubject(subj){
     <h1>${k2 ? 'Pick a topic' : 'Choose a topic'}</h1></div>${hubSpeakBtn()}</div>
     ${gradeLine(band)}
     <div class="topics">${topics.map(function(t){
-      return `<button class="topic ${subj === 'PE' ? 'pe' : 'health'}" id="t_${t.id}" data-t="${t.id}"><span class="ticon" aria-hidden="true">${t.icon}</span><span class="ttext"><span class="tname">${esc(t.name)}</span><span class="tdesc">${esc(k2 ? t.blurbK2 : t.blurb)}</span></span></button>`; }).join('')}</div>
+      return `<button class="topic ${subj === 'PE' ? 'pe' : 'health'}" id="t_${t.id}" data-t="${t.id}"><span class="ticon" aria-hidden="true">${t.icon}</span><span class="ttext"><span class="tname">${esc(t.name)}</span><span class="tdesc">${esc(k2 ? t.blurbK2 : t.blurb)}</span>${isMastered(band, t.id) ? '<span class="mbadge">✓ Mastered</span>' : ''}</span></button>`; }).join('')}</div>
   </div>`;
   bindGear(); bindGradeLine(); bindHubSpeak(S.name + '. ' + topics.map(function(t){ return t.name; }).join('. '));
   app.querySelectorAll('[data-t]').forEach(function(b){ b.onclick = function(){ exploreGo({ s:'topic', topic:b.dataset.t }); }; });
 }
 
 /* ---------- screen 4: a topic page ---------- */
-function activityHTML(a, k2){
-  const state = activityState(a), text = k2 ? a.descK2 : a.desc;
-  if(a.role === 'primary'){
-    return `<button class="actmain" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="atext"><span class="atitle">${esc(a.name)}</span><span class="adesc">${esc(text)}</span></span><span class="agot" aria-hidden="true">▶</span></button>`;
+function activityHTML(a, t, band, k2){
+  const state = activityState(a), text = a.text ? a.text(t, band, k2) : (k2 ? a.descK2 : a.desc), name = k2 && a.nameK2 ? a.nameK2 : a.name;
+  if(a.role === 'learn'){
+    return `<button class="actmain" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="atext"><span class="atitle">${esc(name)}</span><span class="adesc">${esc(text)}</span></span><span class="agot" aria-hidden="true">▶</span></button>`;
   }
-  return `<button class="act ${a.id}" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="ttext"><span class="tname">${esc(a.name)}</span><span class="tdesc">${esc(text)}</span></span></button>`;
+  const badge = a.id === 'mastery' && isMastered(band, t.id) ? '<span class="mbadge">✓ Mastered</span>' : '';
+  return `<button class="act ${a.id}" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="ttext"><span class="tname">${esc(name)}</span><span class="tdesc">${esc(text)}</span>${badge}</span></button>`;
 }
+function pathItem(a, t, band, k2){ return `<li class="pstep"><span class="pnum" aria-hidden="true">${a.step}</span>${activityHTML(a, t, band, k2)}</li>`; }
 function renderTopicPage(topicId){
   exploreOn = true;
   const band = exploreBand(); if(!band){ renderGradePicker(true); return; }
   const t = topicById(topicId);
   if(!t || !topicHasContent(t, band)){ showExplore({ s:'home' }); return; }
   exploreNow = Object.assign({}, exploreNow, { s:'topic', topic:t.id, subj:t.subject });
-  play = exploreCtx(topicPlayId(t));                       /* so availability checks (e.g. Sort It) use this topic */
+  play = exploreCtx(topicPlayId(t), t.id);                 /* so availability checks (e.g. Sort It) use this topic */
   setBandClass(band);
-  const k2 = band === 'k2', acts = ACTIVITIES.filter(function(a){ return a.available(); });
-  const primary = acts.filter(function(a){ return a.role === 'primary'; }), practice = acts.filter(function(a){ return a.role === 'practice'; });
+  const k2 = band === 'k2', acts = ACTIVITIES.filter(function(a){ return a.available(t, band); });
+  const learnA = acts.filter(function(a){ return a.role === 'learn'; }), testA = acts.filter(function(a){ return a.role === 'test'; }), practice = acts.filter(function(a){ return a.role === 'practice'; });
+  const mastered = isMastered(band, t.id);
   view.html = topBar(true) + `<div class="wrap explore wide">
     <div class="court topichero">
       <div class="uic" aria-hidden="true">${t.icon}</div>
       <h1>${esc(t.name)}</h1>
       <p class="tblurb">${esc(k2 ? t.blurbK2 : t.blurb)}</p>
-      <div class="band">${esc(BANDS[band])}</div>
+      <div class="band">${esc(BANDS[band])}</div>${mastered ? '<div class="mbadge herobadge">✓ Mastered</div>' : ''}
       ${hubSpeakBtn()}
     </div>
-    ${primary.map(function(a){ return activityHTML(a, k2); }).join('')}
-    ${practice.length ? `<h2 class="minor">${k2 ? 'More games' : 'More ways to practice'}</h2><div class="acts">${practice.map(function(a){ return activityHTML(a, k2); }).join('')}</div>` : ''}
+    ${learnA.length ? `<h2 class="minor">Learn</h2><ol class="path">${learnA.map(function(a){ return pathItem(a, t, band, k2); }).join('')}</ol>` : ''}
+    ${testA.length ? `<h2 class="minor">${k2 ? 'Show what you know' : 'Test yourself'}</h2><ol class="path" start="${testA[0].step}">${testA.map(function(a){ return pathItem(a, t, band, k2); }).join('')}</ol>` : ''}
+    ${practice.length ? `<h2 class="minor">${k2 ? 'More games' : 'More ways to practice'}</h2><div class="acts">${practice.map(function(a){ return activityHTML(a, t, band, k2); }).join('')}</div>` : ''}
   </div>`;
   bindGear(); bindHubSpeak(t.name + '. ' + t.blurbK2);
   app.querySelectorAll('[data-act]').forEach(function(b){ b.onclick = function(){ launchActivity(t, ACTIVITIES.find(function(a){ return a.id === b.dataset.act; })); }; });
 }
 
 /* ---------- launching activities ---------- */
-function launchActivity(t, a){
+/* chained=true: moving from one activity straight to another (for example Learn -> Quick 10) replaces the current
+   history entry instead of adding one, so the browser Back button still goes back to the topic page in one step. */
+function launchActivity(t, a, chained){
   if(!a || activityState(a) !== 'open') return;
-  play = exploreCtx(topicPlayId(t));
-  pushExplore({ s:'play', topic:t.id, subj:t.subject, act:a.id });
-  go(a.start);
+  play = exploreCtx(topicPlayId(t), t.id);
+  const st = { s:'play', topic:t.id, subj:t.subject, act:a.id };
+  if(chained) replaceExplore(st); else pushExplore(st);
+  go(function(){ a.start(t); });
+}
+function chainTo(actId){
+  const t = topicById(play.topic); if(!t) return;
+  launchActivity(t, ACTIVITIES.find(function(a){ return a.id === actId; }), true);
 }
 function launchReporter(){
   play = exploreCtx(null);                                 /* Reporter has no topic */
   pushExplore({ s:'tool', tool:'reporter' });
   go(startReporter);
+}
+/* back to the subject's topic list (used by "Choose another topic") */
+function exploreToSubject(){
+  const st = history.state, t = topicById(play.topic);
+  if(st && st.bb && st.d >= 2){ history.go(-2); return; }
+  go(function(){ showExplore({ s:'subject', subj:t ? t.subject : 'PE' }); });
+}
+
+/* ---------- Mastery introduction ---------- */
+function renderMasteryIntro(t){
+  const band = play.band, k2 = band === 'k2', need = masteryNeeded(MASTERY_LENGTH), rec = getMastery(band, t.id);
+  const hasLearn = learnFor(t.id, band).length > 0;
+  view.html = topBar(true) + `<div class="wrap explore">
+    <div class="card center" style="padding:28px 20px">
+      <div style="font-size:60px" aria-hidden="true">🏆</div>
+      <h1>${k2 ? 'Master ' + esc(t.name) + '!' : 'Mastery: ' + esc(t.name)}</h1>
+      <p class="sub">${k2 ? `Get ${need} out of ${MASTERY_LENGTH} right.` : `Score ${MASTERY_PERCENT}% or better (${need} of ${MASTERY_LENGTH}) to master this topic.`}</p>
+      <p class="sub">${k2 ? 'No clock. Take your time.' : `${MASTERY_LENGTH} questions. No timer. You will see an explanation after each answer.`}</p>
+      ${rec && rec.mastered ? '<p><span class="mbadge">✓ Mastered</span> You can try again any time.</p>' : ''}
+    </div>
+    <div class="row"><button class="btn go" id="startM">Start Mastery</button>${hasLearn ? '<button class="btn plain" id="reviewL">Review Learn first</button>' : ''}</div>
+  </div>`;
+  bindGear();
+  if(play.speak) speak((k2 ? 'Master ' + t.name + '. ' : 'Mastery. ') + `Get ${need} out of ${MASTERY_LENGTH} right.`);
+  document.getElementById('startM').onclick = function(){ startMastery(); };
+  const rl = document.getElementById('reviewL'); if(rl) rl.onclick = function(){ chainTo('learn'); };
+}
+function startMastery(){ go(function(){ startQuiz({ kind:'mastery', n:MASTERY_LENGTH, strict:true }); }); }
+
+/* ---------- results for Quick 10 / Challenge 20 / Mastery ---------- */
+function exploreResultText(Q, n, res){
+  const k2 = play.band === 'k2', pct = n ? Q.score / n : 0;
+  if(Q.kind === 'mastery'){
+    return res.passed
+      ? { icon:'🏆', head:'Topic Mastered!', msg:k2 ? 'You did it! You know a lot about this topic.' : 'Great work. You showed you understand this topic.' }
+      : { icon:'💪', head:'Almost there!', msg:k2 ? "Let's learn a little more and try again." : 'Review the explanations and try again. You can do it.' };
+  }
+  const label = Q.kind === 'quick10' ? 'Quick 10' : 'Challenge ' + n;
+  const msg = pct >= 0.9 ? 'Amazing work!' : pct >= 0.7 ? 'Great job!' : pct >= 0.4 ? 'Nice effort. Read the explanations and try again.' : 'Every expert started somewhere. Try Learn, then come back.';
+  return { icon:Q.kind === 'quick10' ? '🎯' : '🏅', head:label + ' complete', msg:msg };
+}
+function renderExploreResult(){
+  const Q = quiz, n = Q.qs.length, k2 = play.band === 'k2', t = topicById(play.topic);
+  let res = null;
+  if(Q.kind === 'mastery'){ if(!Q.saved) Q.saved = recordMastery(play.band, play.topic, Q.score, n); res = Q.saved; }
+  const txt = exploreResultText(Q, n, res || {});
+  let ask = '', primary = '', secondary = '';
+  if(Q.kind === 'quick10'){ ask = k2 ? 'Want a bigger game?' : 'Want a bigger challenge?'; primary = `<button class="btn go" id="nextA" data-next="challenge">Challenge 20</button>`; }
+  else if(Q.kind === 'challenge'){ ask = k2 ? 'Ready to master it?' : "Think you've got it?"; primary = `<button class="btn go" id="nextA" data-next="mastery">Try Mastery</button>`; }
+  else if(res.passed){ ask = ''; primary = `<button class="btn go" id="nextA" data-next="subject">Choose Another Topic</button>`; }
+  else { ask = ''; primary = (learnFor(t.id, play.band).length ? `<button class="btn plain" id="reviewA" data-next="learn">Review Learn</button>` : '') + `<button class="btn go" id="nextA" data-next="mastery">Try Mastery Again</button>`; }
+  secondary = `<button class="btn plain" id="again">Play again</button><button class="btn plain" id="home">Back to topic</button>`;
+  view.html = topBar(true) + `<div class="wrap explore"><div class="card center" style="padding:28px 20px">
+    <div class="eyebrow">${esc(quizLabel(Q))} · ${esc(t.name)}</div>
+    <div style="font-size:60px" aria-hidden="true">${txt.icon}</div>
+    <h1>${esc(txt.head)}</h1>
+    <div class="scoreline" tabindex="-1">${Q.score} of ${n} correct</div>
+    <p class="sub" style="margin:8px 0 0">${esc(txt.msg)}</p>
+    ${Q.kind === 'mastery' ? `<p class="sub" style="margin:6px 0 0">${res.passed ? '' : `You need ${masteryNeeded(n)} of ${n} to master this topic. `}${res.record.mastered && !res.passed ? '<span class="mbadge">✓ Mastered</span> from before.' : ''}</p>` : ''}
+    ${Q.qs.length < Q.want ? `<p class="sub shortnote">This topic has ${n} different questions for your grade, so this round had ${n}.</p>` : ''}
+    ${ask ? `<p class="ask">${esc(ask)}</p>` : ''}
+  </div>
+  <div class="row">${primary}</div>
+  <div class="row">${secondary}</div>
+  ${sendBoxHTML('qz', '')}</div>`;
+  bindGear();
+  announce(quizLabel(Q) + ' complete. ' + Q.score + ' of ' + n + ' correct. ' + txt.head + '.');
+  const first = document.getElementById('nextA'); if(first) first.focus({ preventScroll:true });
+  if(play.speak) speak(txt.head + ' ' + Q.score + ' of ' + n + '. ' + txt.msg);
+  app.querySelectorAll('[data-next]').forEach(function(b){ b.onclick = function(){ if(b.dataset.next === 'subject') exploreToSubject(); else chainTo(b.dataset.next); }; });
+  document.getElementById('again').onclick = function(){ go(function(){ startQuiz(Q.opts); }); };
+  document.getElementById('home').onclick = function(){ go(renderHub); };
+  bindSendBox('qz',
+    name => `Bench Boost results: ${name}`,
+    name => [
+      `Student: ${name}`,
+      `Activity: ${quizLabel(Q)}`,
+      `Topic: ${t.name} (${BANDS[play.band]})`,
+      `Score: ${Q.score} of ${n} correct`,
+      ...(Q.kind === 'mastery' ? [`Mastery: ${res.passed ? 'mastered' : 'not yet (needs ' + masteryNeeded(n) + ' of ' + n + ')'}`] : []),
+      `Date: ${new Date().toLocaleString([], {dateStyle:'medium', timeStyle:'short'})}`
+    ].join('\n')
+  );
 }
 
 /* ---------- entry point ---------- */
