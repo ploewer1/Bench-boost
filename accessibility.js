@@ -76,10 +76,10 @@ const view = {
 };
 
 /* ---- timed activities ---- */
-/* settings.timer: "normal" (default) | "extended" (+50% time) | "off" (no clock at all) */
+/* play.timer (from the teacher's saved settings): "normal" (default) | "extended" (+50% time) | "off" (no clock at all) */
 function timerConfig(){
-  const mode = (settings && settings.timer) || 'normal';
-  const base = settings && settings.band === 'k2' ? 90 : 60;
+  const mode = (play && play.timer) || 'normal';
+  const base = play && play.band === 'k2' ? 90 : 60;
   if(mode === 'off') return { mode:'off', secs:0 };
   if(mode === 'extended') return { mode:'extended', secs:Math.round(base * 1.5) };
   return { mode:'normal', secs:base };

@@ -1,9 +1,9 @@
 /* Self-hosted fonts (SIL OFL 1.1). No request ever leaves this site to load them. */
-@font-face{ font-family:'Atkinson Hyperlegible'; font-style:normal; font-weight:400; font-display:swap; src:url('../fonts/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); }
-@font-face{ font-family:'Atkinson Hyperlegible'; font-style:normal; font-weight:700; font-display:swap; src:url('../fonts/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); }
-@font-face{ font-family:'Baloo 2'; font-style:normal; font-weight:600; font-display:swap; src:url('../fonts/baloo-2-latin-600-normal.woff2') format('woff2'); }
-@font-face{ font-family:'Baloo 2'; font-style:normal; font-weight:700; font-display:swap; src:url('../fonts/baloo-2-latin-700-normal.woff2') format('woff2'); }
-@font-face{ font-family:'Baloo 2'; font-style:normal; font-weight:800; font-display:swap; src:url('../fonts/baloo-2-latin-800-normal.woff2') format('woff2'); }
+@font-face{ font-family:'Atkinson Hyperlegible'; font-style:normal; font-weight:400; font-display:swap; src:url('atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); }
+@font-face{ font-family:'Atkinson Hyperlegible'; font-style:normal; font-weight:700; font-display:swap; src:url('atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); }
+@font-face{ font-family:'Baloo 2'; font-style:normal; font-weight:600; font-display:swap; src:url('baloo-2-latin-600-normal.woff2') format('woff2'); }
+@font-face{ font-family:'Baloo 2'; font-style:normal; font-weight:700; font-display:swap; src:url('baloo-2-latin-700-normal.woff2') format('woff2'); }
+@font-face{ font-family:'Baloo 2'; font-style:normal; font-weight:800; font-display:swap; src:url('baloo-2-latin-800-normal.woff2') format('woff2'); }
 
   :root{
     --bg:#EDF3F8; --card:#FFFFFF; --ink:#1B2A4A; --muted:#566781; --line:#D5DFEA; --soft:#E4F3FB;
@@ -200,5 +200,108 @@
   .qhead > div, .qhead > .qtext{ min-width:0; }
   .ans > span:last-child{ min-width:0; }
   .qtext, .sortitem, .claim, .ans > span:last-child{ overflow-wrap:break-word; }
+
+
+  /* =====================================================================
+     Student Explore (Phase 2A): grade picker, home, subject and topic screens, topic page, Back/Home row.
+     Layout uses minmax(0,1fr) grids and min-width:0 so long topic names wrap inside their cards on 320px phones.
+     Nothing here changes the type size of any existing screen.
+     ===================================================================== */
+  .top button:focus-visible{ outline-color:#FFFFFF; }               /* the header is dark navy: the blue ring would not show */
+  .brandbtn{ display:flex; align-items:center; gap:10px; min-height:48px; padding:4px 8px; margin-left:-8px; background:none; border:0; border-radius:12px; color:#FFFFFF; font-family:var(--head); font-weight:800; font-size:24px; letter-spacing:.2px; cursor:pointer; }
+  .brandbtn:hover{ background:rgba(255,255,255,.1); }
+
+  .navrow{ display:flex; gap:10px; align-items:center; max-width:960px; margin:0 auto; padding:12px 18px 0; }
+  .navbtn{ min-height:48px; padding:0 18px; border-radius:14px; border:2px solid var(--line); background:var(--card); color:var(--ink); font-weight:700; font-size:17px; cursor:pointer; }
+  .navbtn:hover{ border-color:var(--blue); }
+  .navbtn.push-right{ margin-left:auto; }
+
+  .explore{ max-width:640px; }
+  .explore.wide{ max-width:960px; }
+  .explore h1{ font-size:clamp(26px,7.4vw,34px); overflow-wrap:break-word; }   /* local to these screens; the rest of the app is untouched */
+  .eyebrow{ margin:4px 0 4px; font-weight:700; font-size:15px; letter-spacing:.3px; color:var(--muted); }
+  .hubhead{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .hubhead > div{ min-width:0; }
+  .hubspeak{ flex-shrink:0; }
+  .gradeline{ display:flex; flex-wrap:wrap; align-items:center; gap:0 8px; margin:0 0 18px; color:var(--muted); font-size:16px; font-weight:700; }
+  .linkbtn.inline{ padding:0 4px; font-weight:700; }
+  .minor{ margin:26px 0 10px; font-family:var(--body); font-size:15px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
+  .teacherline{ margin:22px 0 0; }
+
+  /* grade picker */
+  .gradegrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:8px 0 14px; }
+  .gradebtn{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:140px; padding:14px 8px; border-radius:22px; border:3px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; text-align:center; }
+  .gradebtn:hover{ border-color:var(--blue); }
+  .gradebtn[aria-pressed="true"]{ border-color:var(--blue); background:var(--soft); }
+  .glabel{ font-family:var(--head); font-weight:800; font-size:40px; line-height:1; }
+  .gsub{ font-size:15px; color:var(--muted); overflow-wrap:break-word; }
+  .gcur{ font-size:14px; font-weight:700; color:var(--teal-text); }
+
+  /* two big subject cards */
+  .subjects{ display:grid; grid-template-columns:minmax(0,1fr); gap:14px; }
+  .subject{ display:flex; flex-direction:column; justify-content:flex-end; gap:8px; min-height:150px; padding:22px; border:0; border-radius:26px; color:#FFFFFF; text-align:left; cursor:pointer; }
+  .subject.pe{ background:var(--blue); } .subject.health{ background:var(--green); }
+  .subject:hover{ filter:brightness(1.06); }
+  .sicon{ font-size:48px; line-height:1; }
+  .stext{ display:block; min-width:0; }
+  .stitle{ display:block; font-family:var(--head); font-weight:800; font-size:30px; line-height:1.05; overflow-wrap:break-word; }
+  .sdesc{ display:block; margin-top:4px; font-size:17px; overflow-wrap:break-word; }
+  @media (min-width:640px){ .subjects{ grid-template-columns:repeat(2,minmax(0,1fr)); } .subject{ min-height:220px; } }
+
+  /* quiet secondary tool row (Reporter) */
+  .tool{ display:flex; align-items:center; gap:14px; width:100%; min-height:64px; padding:12px 16px; border-radius:16px; border:2px dashed var(--line); background:transparent; color:var(--ink); text-align:left; cursor:pointer; }
+  .tool:hover{ border-color:var(--blue); }
+  .ticon2{ font-size:28px; }
+  .ttext2{ display:block; min-width:0; }
+  .tname2{ display:block; font-weight:700; font-size:17px; }
+  .tdesc2{ display:block; color:var(--muted); font-size:15px; }
+
+  /* topic cards */
+  .topics{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  @media (min-width:640px){ .topics{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (min-width:960px){ .topics{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  .topic{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:center; min-height:92px; padding:16px; border-radius:20px; border:2px solid var(--line); border-left-width:8px; background:var(--card); color:var(--ink); text-align:left; cursor:pointer; }
+  .topic.pe{ border-left-color:var(--blue); } .topic.health{ border-left-color:var(--green); }
+  .topic:hover{ border-color:var(--ink); }
+  .ticon{ display:grid; place-items:center; width:56px; height:56px; border-radius:16px; background:var(--soft); font-size:30px; }
+  .ttext{ display:block; min-width:0; }
+  .tname{ display:block; font-family:var(--head); font-weight:800; font-size:20px; line-height:1.15; overflow-wrap:break-word; }
+  .tdesc{ display:block; margin-top:3px; color:var(--muted); font-size:15.5px; overflow-wrap:break-word; }
+
+  /* topic page */
+  .topichero{ margin-bottom:18px; }
+  .topichero h1{ margin-top:8px; color:#FFFFFF; }
+  .tblurb{ margin:6px 0 0; font-size:17px; opacity:.92; overflow-wrap:break-word; }
+  .topichero .hubspeak{ position:absolute; top:16px; right:16px; z-index:1; color:var(--ink); }   /* the banner is white-on-navy, the button is a white card: keep its glyph dark */
+  .actmain{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:16px; align-items:center; width:100%; min-height:112px; padding:20px; margin:0 0 4px; border:0; border-radius:24px; background:var(--blue); color:#FFFFFF; text-align:left; cursor:pointer; }
+  .actmain:hover{ filter:brightness(1.06); }
+  .actmain .aicon{ font-size:44px; line-height:1; }
+  .atext{ display:block; min-width:0; }
+  .atitle{ display:block; font-family:var(--head); font-weight:800; font-size:30px; line-height:1.05; }
+  .adesc{ display:block; margin-top:3px; font-size:17px; overflow-wrap:break-word; }
+  .agot{ font-size:26px; }
+  .acts{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  @media (min-width:560px){ .acts{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (min-width:900px){ .acts{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  .act{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:center; min-height:80px; padding:14px 16px; border-radius:18px; border:2px solid var(--line); background:var(--card); color:var(--ink); text-align:left; cursor:pointer; }
+  .act:hover{ border-color:var(--ink); }
+  .act .aicon{ display:grid; place-items:center; width:50px; height:50px; border-radius:14px; font-size:26px; color:#FFFFFF; background:var(--purple); }
+  .act.fact .aicon{ background:var(--teal); } .act.sort .aicon{ background:var(--green); }
+  /* future free/pro: an activity whose data-state is "locked" (Phase 2B/3) gets a quiet treatment here */
+  [data-state="locked"]{ cursor:not-allowed; }
+
+  /* K-2: bigger, simpler, icon-led */
+  .band-k2 .navbtn{ min-height:60px; font-size:21px; padding:0 22px; }
+  .band-k2 .explore h1{ font-size:clamp(30px,8.8vw,40px); }      /* K-2 headings stay larger than 3-5 at every width */
+  .band-k2 .eyebrow, .band-k2 .gradeline{ font-size:18px; }
+  .band-k2 .subject{ min-height:170px; } .band-k2 .stitle{ font-size:36px; } .band-k2 .sdesc{ font-size:21px; } .band-k2 .sicon{ font-size:60px; }
+  .band-k2 .topic{ grid-template-columns:minmax(0,1fr); justify-items:center; text-align:center; padding:20px 14px; gap:10px; }
+  .band-k2 .ticon{ width:80px; height:80px; font-size:46px; }
+  .band-k2 .tname{ font-size:26px; } .band-k2 .tdesc{ font-size:19px; }
+  .band-k2 .actmain{ min-height:132px; } .band-k2 .atitle{ font-size:38px; } .band-k2 .adesc{ font-size:21px; } .band-k2 .actmain .aicon{ font-size:56px; }
+  .band-k2 .act{ min-height:96px; } .band-k2 .act .aicon{ width:64px; height:64px; font-size:34px; } .band-k2 .act .tname{ font-size:24px; } .band-k2 .act .tdesc{ font-size:19px; }
+  .band-k2 .tblurb{ font-size:21px; }
+  .band-k2 .tname2{ font-size:21px; }
+  .band-k2 .gradeline{ margin-bottom:22px; }
 
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }

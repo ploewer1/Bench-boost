@@ -1,6 +1,6 @@
 "use strict";
 /*
- * app.js - shared helpers, the student home screen, and the start-up call.
+ * app.js - shared helpers, the teacher-kiosk student home screen, and the start-up call.
  * Loaded LAST so every other file's functions exist before boot() runs.
  */
 /* ---------- helpers ---------- */
@@ -8,11 +8,17 @@ const app = document.getElementById('app');
 const canSpeak = 'speechSynthesis' in window;
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-function unitInfo(id){ return UNITS.find(u=>u.id===id) || MIX.find(m=>m.id===id); }
+/* A unit id, a review mix, or a Student Explore topic that combines several units (id "topic:<topic id>"). */
+function unitInfo(id){
+  const t = typeof id === 'string' && id.indexOf('topic:') === 0 ? TOPICS.find(x => 'topic:' + x.id === id) : null;
+  if(t) return { id:id, name:t.name, icon:t.icon, cat:t.subject };
+  return UNITS.find(u=>u.id===id) || MIX.find(m=>m.id===id);
+}
 function unitsFor(id){
   if(id==='mix-pe') return UNITS.filter(u=>u.cat==='PE');
   if(id==='mix-health') return UNITS.filter(u=>u.cat==='Health');
   if(id==='mix-all') return UNITS;
+  if(typeof id === 'string' && id.indexOf('topic:') === 0){ const t = TOPICS.find(x => 'topic:' + x.id === id); return t ? UNITS.filter(u => t.units.indexOf(u.id) >= 0) : []; }
   return UNITS.filter(u=>u.id===id);
 }
 function speak(text){
@@ -20,22 +26,28 @@ function speak(text){
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,''));
-    u.rate = settings && settings.band==='k2' ? 0.9 : 1;
+    u.rate = play && play.band==='k2' ? 0.9 : 1;
     speechSynthesis.speak(u);
   }catch(e){}
 }
 function stopSpeak(){ if(canSpeak){ try{ speechSynthesis.cancel(); }catch(e){} } }
-function bestKey(){ return 'best_'+settings.band+'_'+settings.unit; }
+function bestKey(){ return 'best_'+play.band+'_'+play.unit; }
 function topBar(studentMode){
+  if(studentMode && exploreOn) return exploreTop();          /* Student Explore has its own header + Back/Home row (explore.js) */
   return `<div class="top"><div class="brand"><span class="spotlogo" aria-hidden="true"></span>Bench Boost</div>${
     studentMode ? `<button class="iconbtn" id="gear" aria-label="Teacher settings (PIN required)">⚙️</button>` : `<span class="toptag">Teacher setup</span>`}</div>`;
 }
-function bindGear(){ const g=document.getElementById('gear'); if(g) g.onclick=()=>{ stopSpeak(); renderPin(renderSetup); }; }
+function bindGear(){
+  const g=document.getElementById('gear'); if(g) g.onclick=()=>{ stopSpeak(); renderPin(renderSetup); };
+  if(typeof bindExploreNav === 'function') bindExploreNav();
+}
 function go(fn){ stopSpeak(); clearTimers(); fn(); window.scrollTo(0,0); }
 
 
 /* ---------- student home ---------- */
+/* Teacher kiosk home: the grade band and topic the teacher chose (unchanged from before Student Explore existed). */
 function renderHome(){
+  play = settings;                       /* the engines play whatever the teacher configured */
   document.body.className = 'band-'+settings.band;
   const u = unitInfo(settings.unit);
   const best = store.get(bestKey(), 0);
@@ -51,7 +63,7 @@ function renderHome(){
       <button class="mode lightning" id="mLr"><span class="big">⚡</span><span class="t">Lightning Round</span><span class="d">Answer as many as you can before time runs out.</span></button>
       <button class="mode fact" id="mFact"><span class="big">🕵️</span><span class="t">Fact Check</span><span class="d">Someone gave an answer. Is it right or wrong?</span></button>
       ${sortSetsFor(settings.band).length?`<button class="mode sort" id="mSort"><span class="big">🗂️</span><span class="t">Sort It</span><span class="d">Put each one in the right group.</span></button>`:''}
-      <button class="mode rep" id="mRep"><span class="big">📝</span><span class="t">Sideline Reporter</span><span class="d">Watch your class and report what you see.</span></button>
+      <button class="mode rep" id="mRep"><span class="big">📝</span><span class="t">Bench Reporter</span><span class="d">Watch your class and report what you see.</span></button>
     </div>
   </div>`;
   bindGear();

@@ -1,0 +1,14 @@
+BENCH BOOST - HOW TO UPLOAD THIS SITE TO GITHUB PAGES
+=====================================================
+This zip is the WHOLE WEBSITE and nothing else.
+
+1. Unzip it on a computer (Windows: right-click > Extract All).
+2. On github.com open your repository > Add file > Upload files.
+3. Open the unzipped folder, press Ctrl+A to select everything INSIDE it, and drag it all into the browser window.
+   (Drag the contents, not the outer folder, so index.html sits at the top level.)
+4. Wait until every file is listed, then click "Commit changes". The new index.html replaces the old one.
+5. Wait 1-2 minutes, open your site, and press Ctrl+Shift+R.
+
+You can leave out this HOW-TO-UPLOAD.txt file; the site does not use it.
+Full instructions and a 5-minute check: docs/DEPLOYMENT.md (in the FULL project zip).
+Do NOT upload anything from the LEGACY folder - that is the old app.

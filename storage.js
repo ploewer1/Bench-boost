@@ -14,4 +14,8 @@ const store = {
 let settings = store.get('settings', null);
 let pin = store.get('pin', '1234');
 let quiz = null, rep = null;
+/* play = the settings the game engines are using RIGHT NOW: { band, unit, rounds, speak, timer, explore? }.
+   Teacher kiosk: play IS the teacher's saved settings. Student Explore: play is built from the student's grade band and topic.
+   The saved teacher settings above are never changed by Student Explore. */
+let play = null;
 

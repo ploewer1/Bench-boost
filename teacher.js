@@ -1,6 +1,6 @@
 "use strict";
 /*
- * teacher.js - everything a teacher sees: setup, the classroom PIN pad, and saved Sideline reports.
+ * teacher.js - everything a teacher sees: setup, the classroom PIN pad, and saved Bench Reporter reports.
  * The 4-digit PIN is a classroom convenience lock that keeps students out of setup. It is NOT authentication;
  * the teacher's account sign-in (auth.js) is what protects the account.
  */
@@ -40,22 +40,27 @@ function renderSetup(){
       ${accountCardHTML(confirmOut)}
       <div class="row">
         <button class="btn go" id="start">Start student mode</button>
-        <button class="btn plain" id="reports">Sideline reports (${reports.length})</button>
+        <button class="btn blue" id="exploreStart">Open Student Explore</button>
       </div>
+      <p class="hint">Student mode locks students to the grade and topic above. Student Explore lets each student pick their own grade, subject and topic.</p>
+      <div class="row"><button class="btn plain" id="reports">Saved reports (${reports.length})</button></div>
     </div>`;
     app.querySelectorAll('[data-band]').forEach(b=>b.onclick=()=>{ draft.band=b.dataset.band; draft.speak = draft.band==='k2'; paint(); });
     app.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{ draft.unit=b.dataset.unit; paint(); });
     app.querySelectorAll('[data-rounds]').forEach(b=>b.onclick=()=>{ draft.rounds=+b.dataset.rounds; paint(); });
     app.querySelectorAll('[data-timer]').forEach(b=>b.onclick=()=>{ draft.timer=b.dataset.timer; paint(); });
     app.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>{ draft.speak=b.dataset.speak==='1'; paint(); });
-    document.getElementById('start').onclick=()=>{
+    /* Saves the teacher's choices (same as before). Returns false if the PIN is not valid. */
+    function saveDraft(){
       const p = document.getElementById('pinIn').value.trim(); pinDraft = p;
-      if(!/^\d{4}$/.test(p)){ pinErr='Enter a 4-digit PIN.'; paint(); return; }
+      if(!/^\d{4}$/.test(p)){ pinErr='Enter a 4-digit PIN.'; paint(); return false; }
       pin = p; store.set('pin', pin);
       settings = draft; store.set('settings', settings);
       if(sb && sessionUser) pushSettings(settings, pin).catch(()=>{});
-      go(renderHome);
-    };
+      return true;
+    }
+    document.getElementById('start').onclick=()=>{ if(!saveDraft()) return; store.set('mode', 'kiosk'); exploreOn = false; go(renderHome); };
+    document.getElementById('exploreStart').onclick=()=>{ if(!saveDraft()) return; go(startExplore); };
     document.getElementById('reports').onclick=()=>go(renderReports);
     document.getElementById('pinIn').oninput=e=>{ pinDraft = e.target.value; };
     const so=document.getElementById('signout'); if(so) so.onclick=()=>{ confirmOut=true; paint(); };
@@ -85,7 +90,7 @@ function renderPin(onOk){
       paint(false);
     });
     document.getElementById('del').onclick=()=>{ entry=entry.slice(0,-1); paint(false); };
-    document.getElementById('back').onclick=()=>go(settings?renderHome:renderSetup);
+    document.getElementById('back').onclick=()=>go(returnToStudent);
   }
   paint(false);
 }
@@ -100,9 +105,9 @@ function renderReports(){
         <div class="who">${esc(r.name||'No name')}</div>
         <div class="meta">${new Date(r.t).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}. ${esc(BANDS[r.band]||'')}, ${esc(r.unit)}</div>
         <dl>${r.items.map(it=>`<dt>${esc(it.p)}</dt><dd>${esc(it.a)}</dd>`).join('')}</dl></div>`).join('')
-      : `<div class="card"><p class="sub" style="margin:0">No reports yet. Reports appear here after a student finishes Sideline Reporter on this device.</p></div>`;
+      : `<div class="card"><p class="sub" style="margin:0">No reports yet. Reports appear here after a student finishes Bedeline Reporter on this device.</p></div>`;
     view.html = topBar(false) + `<div class="wrap">
-      <h1>Sideline reports</h1><p class="sub">Saved on this device only. Newest first.</p>
+      <h1>Saved reports</h1><p class="sub">Saved on this device only. Newest first.</p>
       ${list}
       <div class="row" style="margin-top:8px">
         <button class="btn plain" id="back">Back to setup</button>

@@ -41,7 +41,8 @@ function trialLine(){
   return days > 0 ? `Free trial: ${days} day${days===1?'':'s'} left` : 'Free trial ended';
 }
 function routeIntoApp(){
-  if(settings && unitInfo(settings.unit) && BANDS[settings.band]) renderHome(); else renderSetup();
+  /* Devices that already have a teacher kiosk configured keep opening in kiosk mode; everyone else starts in Student Explore. */
+  if(currentMode() === 'kiosk') renderHome(); else startExplore();
 }
 
 async function pushSettings(s, p){
@@ -91,7 +92,7 @@ async function enterApp(){
 async function doSignOut(){
   try{ await sb.auth.signOut({ scope:'local' }); }catch(e){}
   try{ Object.keys(localStorage).filter(k=>k.indexOf('sq_')===0).forEach(k=>localStorage.removeItem(k)); }catch(e){}
-  settings = null; pin = '1234'; account = null; sessionUser = null; recovering = false;
+  settings = null; play = null; exploreOn = false; pin = '1234'; account = null; sessionUser = null; recovering = false;
   renderAuth('in');
 }
 
