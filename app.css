@@ -343,4 +343,112 @@
     .band-k2 .pstep .agot{ display:none; }
   }
 
+
+  /* =====================================================================
+     Phase 2C: brand lockup, theme control, path polish, feedback, results, Learn cards, age-band restraint.
+     Colors are the existing variables only, so both themes keep their contrast. Text is never shrunk to fit.
+     ===================================================================== */
+  .brandtext{ display:flex; flex-direction:column; align-items:flex-start; min-width:0; line-height:1.1; text-align:left; }
+  .brandname{ display:block; }
+  .brandline{ display:block; margin-top:4px; font-family:var(--body); font-weight:700; font-size:15px; letter-spacing:0; color:#DCE7F5; line-height:1.2; }
+  .byline{ display:block; margin-top:2px; font-family:var(--body); font-weight:400; font-size:14px; letter-spacing:0; color:#B7C7DE; line-height:1.2; }
+  .parentbrand{ font-weight:700; color:#DCE7F5; }                       /* the one slot a future Evolution PE logo replaces */
+  .top.lockup{ padding-top:calc(14px + env(safe-area-inset-top,0px)); padding-bottom:14px; }
+  .lockup .spotlogo{ width:44px; height:44px; box-shadow:14px 0 0 -5px var(--yellow), 26px 0 0 -10px var(--blue-bright); margin-right:16px; flex-shrink:0; }
+  .lockup .brandname{ font-size:28px; }
+  .brandbtn{ text-align:left; }
+
+  .homefoot{ margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .themepick{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; margin:6px 0 10px; }
+  .themelabel{ font-size:14px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); margin-right:2px; }
+  .themeopt{ min-height:44px; min-width:64px; padding:6px 14px; border-radius:999px; border:2px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:16px; font-weight:700; cursor:pointer; }
+  .themeopt[aria-pressed="true"]{ background:var(--bar); border-color:var(--bar); color:#FFFFFF; }
+
+  .pathhint{ margin:0 0 4px; color:var(--muted); font-size:16px; }
+  .pnum.done{ background:var(--green); }
+  .act.is-mastered{ border-color:var(--green); background:linear-gradient(0deg, var(--goodbg), var(--goodbg)); }
+  .act.is-locked{ border-style:dashed; }
+  .tierbadge{ display:inline-block; margin-top:6px; padding:2px 10px; border-radius:99px; font-size:13px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; background:var(--soft); color:var(--ink); }
+  .tierbadge.pro{ background:var(--purple); color:#FFFFFF; }
+
+  /* answer feedback: the explanation is the valuable part, so it gets its own panel */
+  .fbhead{ display:flex; align-items:center; gap:10px; }
+  .fbhead strong{ margin:0; }
+  .fbicon{ display:grid; place-items:center; flex:none; width:32px; height:32px; border-radius:50%; background:currentColor; }
+  .fbicon > span{ color:var(--card); font-weight:800; font-size:18px; line-height:1; }
+  .fbanswer{ margin:8px 0 0; font-weight:700; }
+  .why{ margin-top:12px; padding:12px 16px 14px; border-radius:14px; border-left:6px solid var(--blue); background:var(--card); color:var(--ink); }
+  .whylabel{ display:block; font-size:13px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--teal-text); margin-bottom:2px; }
+  .why p{ margin:0; font-size:19px; line-height:1.45; overflow-wrap:break-word; }
+  .band-k2 .why p{ font-size:23px; }
+  .band-k2 .whylabel{ font-size:15px; }
+
+  /* results */
+  .result .ricon{ display:grid; place-items:center; width:88px; height:88px; margin:8px auto 4px; border-radius:50%; background:var(--soft); font-size:46px; }
+  .result.mastered{ border:2px solid var(--green); }
+  .result.mastered .ricon{ background:var(--goodbg); }
+  .primaryrow .btn{ min-height:64px; font-size:21px; }
+  .quietrow{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px; }
+  .quietrow .btn{ min-height:52px; font-size:17px; padding:10px 14px; }
+  .emailmore{ margin-top:18px; }
+  .emailmore > summary{ display:flex; align-items:center; min-height:44px; padding:6px 4px; cursor:pointer; font-weight:700; color:var(--muted); }
+  .emailmore[open] > summary{ margin-bottom:8px; }
+  .emailmore .sendbox h2{ display:none; }                                /* the summary already says it */
+
+  /* Learn cards */
+  .licon{ display:grid; place-items:center; width:72px; height:72px; border-radius:50%; background:var(--soft); font-size:38px; }
+  .lcard{ padding:24px 22px; }
+  .lhead{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }   /* icon and read-aloud share a row, so the title gets the whole card width */
+  .ltitle{ margin:14px 0 10px; }
+  .row.lnav{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); gap:10px; }
+  .row.lnav .btn{ min-width:0; padding-inline:10px; }
+  .band-k2 .licon{ width:96px; height:96px; font-size:54px; }
+  .band-k2 .row.lnav{ grid-template-columns:minmax(0,1fr); }
+  @media (max-width:339px){ .row.lnav{ grid-template-columns:minmax(0,1fr); } }
+
+  /* restrained developmental differences: older students get the same product, a little less playful */
+  .band-g68 .subject, .band-g912 .subject{ border-radius:18px; min-height:132px; padding:20px; }
+  .band-g68 .sicon, .band-g912 .sicon{ display:grid; place-items:center; width:56px; height:56px; border-radius:14px; background:rgba(255,255,255,.18); font-size:30px; }
+  .band-g68 .court, .band-g912 .court{ border-radius:20px; }
+  .band-g68 .ans, .band-g912 .ans{ border-radius:14px; }
+  .band-g912 .stitle{ font-size:28px; letter-spacing:.1px; }
+  .band-g912 .result .ricon{ width:72px; height:72px; font-size:38px; }
+  .band-g68 .licon, .band-g912 .licon{ border-radius:16px; width:60px; height:60px; font-size:32px; }
+
+  /* narrow screens: break long words with a hyphen at a syllable instead of mid-word. overflow-wrap stays as the safety net,
+     so a word that cannot be hyphenated still wraps instead of causing sideways scrolling. */
+  @media (max-width:480px){
+    h1, h2, .stitle, .sdesc, .tname, .tdesc, .tblurb, .atitle, .adesc, .ltitle, .lbody p, .qtext, .claim, .sortitem, .why p, .ans > span:last-child,
+    .tname2, .tdesc2, .glabel, .gsub{ -webkit-hyphens:auto; hyphens:auto; overflow-wrap:break-word; }
+  }
+
+  /* after an answer, the options that were not chosen stay READABLE (students learn from the wrong choices too): a quiet
+     neutral panel instead of a faded color */
+  .ans.dim{ opacity:1; background:var(--line); color:var(--ink); }
+  .ans.dim .spot{ background:transparent; border-color:var(--muted); }
+  .emailmore > summary::after{ content:"▾"; margin-left:8px; }
+  .emailmore[open] > summary::after{ content:"▴"; }
+
+  /* small phones: the read-aloud button moves ABOVE the question (right-aligned) instead of beside it, so long words such as
+     "environment" fit without breaking mid-word. Text size is unchanged. */
+  @media (max-width:400px){
+    .qcard{ padding:18px; }
+    .qhead{ flex-direction:column-reverse; align-items:stretch; gap:10px; }
+    .qhead .speak{ align-self:flex-end; }
+  }
+
+  /* inputs inside the collapsible email section computed as content-box in Chrome; say it outright */
+  input.text, textarea{ box-sizing:border-box; max-width:100%; }
+  /* the unit emoji in teacher setup is wider than its 34px box in large K-2 text; let the box grow instead of bleeding into the label */
+  .unit .ic{ width:auto; min-width:34px; }
+
+  /* dark theme: the navy step badge and Mastery chip nearly match the page, so give them a quiet ring */
+  .pnum, .act.mastery .aicon{ box-shadow:inset 0 0 0 2px var(--line); }
+  /* very small phones: keep "Bench Boost" on one line in the home header (logo and wordmark a little smaller; still no smaller than the compact header's 24px) */
+  @media (max-width:340px){
+    .top.lockup{ padding-left:14px; padding-right:14px; }
+    .lockup .spotlogo{ width:36px; height:36px; margin-right:12px; box-shadow:11px 0 0 -4px var(--yellow), 20px 0 0 -8px var(--blue-bright); }
+    .lockup .brandname{ font-size:25px; }
+  }
+
   @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }

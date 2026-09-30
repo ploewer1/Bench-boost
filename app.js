@@ -32,9 +32,14 @@ function speak(text){
 }
 function stopSpeak(){ if(canSpeak){ try{ speechSynthesis.cancel(); }catch(e){} } }
 function bestKey(){ return 'best_'+play.band+'_'+play.unit; }
+/* The Bench Boost mark. lockup=true (Explore home and first use) adds the product line and the parent-brand attribution.
+   "by Evolution PE" is ONE replaceable slot (.parentbrand): a future Evolution PE logo can replace that span without touching layout. */
+function brandMark(lockup){
+  return `<span class="spotlogo" aria-hidden="true"></span><span class="brandtext"><span class="brandname">Bench Boost</span>${lockup ? `<span class="brandline">Health &amp; PE Learning Games</span><span class="byline">by <span class="parentbrand">Evolution PE</span></span>` : ''}</span>`;
+}
 function topBar(studentMode){
   if(studentMode && exploreOn) return exploreTop();          /* Student Explore has its own header + Back/Home row (explore.js) */
-  return `<div class="top"><div class="brand"><span class="spotlogo" aria-hidden="true"></span>Bench Boost</div>${
+  return `<div class="top"><div class="brand">${brandMark(false)}</div>${
     studentMode ? `<button class="iconbtn" id="gear" aria-label="Teacher settings (PIN required)">⚙️</button>` : `<span class="toptag">Teacher setup</span>`}</div>`;
 }
 function bindGear(){

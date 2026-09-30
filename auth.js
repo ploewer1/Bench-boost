@@ -11,7 +11,7 @@ const SUPABASE_KEY = 'sb_publishable_6pmSCLBXzkrMdl3H518BCg_oJ1ILf7G';
 const DEFAULTS = { band:'k2', unit:'rules', rounds:10, speak:false, pin:'1234' };
 let sb = null, sessionUser = null, account = null, recovering = false;
 
-function authTop(){ return `<div class="top"><div class="brand"><span class="spotlogo" aria-hidden="true"></span>Bench Boost</div><span class="toptag">Teacher account</span></div>`; }
+function authTop(){ return `<div class="top"><div class="brand">${brandMark(false)}</div><span class="toptag">Teacher account</span></div>`; }
 function show(html){ stopSpeak(); clearTimers(); document.body.className=''; view.html = html; window.scrollTo(0,0); }
 function field(id,label,type,extra){ return `<label for="${id}" style="font-weight:700;display:block;margin:12px 0 6px">${label}</label><input class="text" id="${id}" type="${type}" ${extra||''}>`; }
 function redirectUrl(){ return /^https?:$/.test(location.protocol) ? location.origin + location.pathname : undefined; }
@@ -91,7 +91,7 @@ async function enterApp(){
 
 async function doSignOut(){
   try{ await sb.auth.signOut({ scope:'local' }); }catch(e){}
-  try{ Object.keys(localStorage).filter(k=>k.indexOf('sq_')===0).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  try{ Object.keys(localStorage).filter(k=>k.indexOf('sq_')===0 && k!=='sq_theme').forEach(k=>localStorage.removeItem(k)); }catch(e){}
   settings = null; play = null; exploreOn = false; pin = '1234'; account = null; sessionUser = null; recovering = false;
   renderAuth('in');
 }

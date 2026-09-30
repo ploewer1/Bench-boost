@@ -20,8 +20,8 @@ function renderLearnCard(){
     <div class="qbar"><span>Learn</span><span>Card ${L.i + 1} of ${n}</span></div>
     <div class="track" aria-hidden="true">${dots}</div>
     <div class="card lcard">
-      <div class="qhead"><div><div class="licon" aria-hidden="true">${c.icon}</div><h1 class="ltitle" tabindex="-1"><span class="sr-only">Card ${L.i + 1} of ${n}. </span>${esc(c.title)}</h1></div>
-      ${canSpeak ? `<button class="speak" id="say" aria-label="Read this card aloud">🔊</button>` : ''}</div>
+      <div class="lhead"><div class="licon" aria-hidden="true">${c.icon}</div>${canSpeak ? `<button class="speak" id="say" aria-label="Read this card aloud">🔊</button>` : ''}</div>
+      <h1 class="ltitle" tabindex="-1"><span class="sr-only">Card ${L.i + 1} of ${n}. </span>${esc(c.title)}</h1>
       <div class="lbody">${paras}</div>
     </div>
     <div class="row lnav"><button class="btn plain" id="lPrev" ${first ? 'disabled' : ''}>← Previous</button><button class="btn go" id="lNext">${last ? 'Finish' : 'Next →'}</button></div>

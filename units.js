@@ -11,7 +11,7 @@ const UNITS = [
   { id:"move", code:"MOV", cat:"PE", icon:"🏃", name:"Movement Skills & Concepts" },
   { id:"throw", code:"THR", cat:"PE", icon:"⚾", name:"Throwing, Catching & Kicking" },
   { id:"dance", code:"DAN", cat:"PE", icon:"🤸", name:"Dance, Rhythm & Gymnastics" },
-  { id:"sports", code:"SPT", cat:"PE", icon:"🏆", name:"Sports & Game Strategy" },
+  { id:"sports", code:"SPT", cat:"PE", icon:"🏟️", name:"Sports & Game Strategy" },
   { id:"fitness", code:"FIT", cat:"PE", icon:"💪", name:"Fitness Components" },
   { id:"testing", code:"TST", cat:"PE", icon:"📊", name:"Fitness Testing & Goals" },
   { id:"active", code:"ACT", cat:"PE", icon:"🚴", name:"Active Lifestyle" },

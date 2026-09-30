@@ -93,7 +93,7 @@ function renderQuiz(){
       <div class="qhead"><div>${(mix||cur.extra)?`<span class="qtag">${cur.extra?'Review: ':''}${cur.icon} ${esc(cur.unit)}</span>`:''}<p class="qtext" tabindex="-1"><span class="sr-only">Question ${Q.i+1} of ${Q.qs.length}. </span>${esc(cur.q)}</p></div>
       ${canSpeak?`<button class="speak" id="say" aria-label="Read question aloud">🔊</button>`:''}</div>
       <div class="answers">${answers}</div>
-      ${Q.answered?`<div class="feedback ${right?'good':'bad'}"><strong>${right?['Nice!','You got it!','Great job!','Awesome!'][Q.i%4]:'Not quite.'}</strong>${right?'':'The answer is '+esc(cur.correct)+'. '}${esc(cur.exp)}</div>
+      ${Q.answered?`<div class="feedback ${right?'good':'bad'}"><div class="fbhead"><span class="fbicon" aria-hidden="true"><span>${right?'✓':'✕'}</span></span><strong>${right?['Nice!','You got it!','Great job!','Awesome!'][Q.i%4]:'Not quite.'}</strong></div>${right?'':`<p class="fbanswer">The answer is ${esc(cur.correct)}.</p>`}<div class="why"><span class="whylabel">Why</span><p>${esc(cur.exp)}</p></div></div>
         <div class="row nextrow"><button class="btn blue" id="next">${last?'See my results':'Next question'}</button></div>`:''}
     </div>
   </div>`;

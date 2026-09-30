@@ -153,7 +153,8 @@ window.addEventListener('popstate', function(e){
 
 /* ---------- header (replaces the kiosk header while Explore is active) ---------- */
 function exploreTop(){
-  const head = `<div class="top"><button class="brandbtn" id="homeBtn" aria-label="Bench Boost home"><span class="spotlogo" aria-hidden="true"></span>Bench Boost</button><button class="iconbtn" id="gear" aria-label="Teacher settings (PIN required)">⚙️</button></div>`;
+  const lock = exploreNow.s === 'home' || exploreNow.s === 'grade';       /* the full brand lockup shows on home and first use only */
+  const head = `<div class="top${lock ? ' lockup' : ''}"><button class="brandbtn" id="homeBtn" aria-label="Bench Boost home">${brandMark(lock)}</button><button class="iconbtn" id="gear" aria-label="Teacher settings (PIN required)" title="Teacher settings">⚙️</button></div>`;
   const s = exploreNow.s;
   if(s === 'home' || s === 'grade') return head;
   let back = 'Home', showHome = true;
@@ -208,7 +209,7 @@ function renderExploreHome(){
   setBandClass(band);
   const k2 = band === 'k2', P = SUBJECTS.PE, H = SUBJECTS.Health;
   view.html = topBar(true) + `<div class="wrap explore">
-    <div class="hubhead"><div><p class="eyebrow">Health &amp; PE Learning Games</p>
+    <div class="hubhead"><div>
     <h1>${k2 ? 'What do you want to learn?' : 'What do you want to learn today?'}</h1></div>${hubSpeakBtn()}</div>
     ${gradeLine(band)}
     <div class="subjects">
@@ -217,9 +218,12 @@ function renderExploreHome(){
     </div>
     <h2 class="minor">Student tools</h2>
     <button class="tool" id="mRep"><span class="ticon2" aria-hidden="true">📝</span><span class="ttext2"><span class="tname2">Bench Reporter</span>${k2 ? '' : '<span class="tdesc2">Watch your class and write what you see.</span>'}</span></button>
-    <p class="center teacherline"><button class="linkbtn" id="teacherMode"><span aria-hidden="true">🔒</span> Teacher Mode</button></p>
+    <div class="homefoot">
+      <p class="center teacherline"><button class="linkbtn" id="teacherMode"><span aria-hidden="true">🔒</span> Teacher Mode<span class="sr-only"> (teacher settings, PIN required)</span></button></p>
+      ${themeControlHTML()}
+    </div>
   </div>`;
-  bindGear(); bindGradeLine(); bindHubSpeak('What do you want to learn? Physical Education. ' + P.blurbK2 + ' Health. ' + H.blurbK2);
+  bindGear(); bindGradeLine(); bindThemeControl(); bindHubSpeak('What do you want to learn? Physical Education. ' + P.blurbK2 + ' Health. ' + H.blurbK2);
   document.getElementById('sPE').onclick = function(){ exploreGo({ s:'subject', subj:'PE' }); };
   document.getElementById('sHealth').onclick = function(){ exploreGo({ s:'subject', subj:'Health' }); };
   document.getElementById('mRep').onclick = launchReporter;
@@ -245,15 +249,24 @@ function renderSubject(subj){
 }
 
 /* ---------- screen 4: a topic page ---------- */
+/* Free / Pro / Locked visual states. Everything is free and open today, so this returns '' and NO badge or lock is shown.
+   When activityState() starts returning "locked" (or an activity's tier becomes "pro") the badge appears with no redesign. */
+function tierBadge(a, state){
+  if(state === 'locked') return '<span class="tierbadge locked"><span aria-hidden="true">🔒</span> Locked</span>';
+  return a.tier === 'pro' ? '<span class="tierbadge pro">Pro</span>' : '';
+}
 function activityHTML(a, t, band, k2){
   const state = activityState(a), text = a.text ? a.text(t, band, k2) : (k2 ? a.descK2 : a.desc), name = k2 && a.nameK2 ? a.nameK2 : a.name;
   if(a.role === 'learn'){
     return `<button class="actmain" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="atext"><span class="atitle">${esc(name)}</span><span class="adesc">${esc(text)}</span></span><span class="agot" aria-hidden="true">▶</span></button>`;
   }
-  const badge = a.id === 'mastery' && isMastered(band, t.id) ? '<span class="mbadge">✓ Mastered</span>' : '';
-  return `<button class="act ${a.id}" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="ttext"><span class="tname">${esc(name)}</span><span class="tdesc">${esc(text)}</span>${badge}</span></button>`;
+  const badge = (a.id === 'mastery' && isMastered(band, t.id) ? '<span class="mbadge">✓ Mastered</span>' : '') + tierBadge(a, state);
+  return `<button class="act ${a.id}${a.id === 'mastery' && isMastered(band, t.id) ? ' is-mastered' : ''}${state === 'locked' ? ' is-locked' : ''}" id="${a.el}" data-act="${a.id}" data-state="${state}"><span class="aicon" aria-hidden="true">${a.icon}</span><span class="ttext"><span class="tname">${esc(name)}</span><span class="tdesc">${esc(text)}</span>${badge}</span></button>`;
 }
-function pathItem(a, t, band, k2){ return `<li class="pstep"><span class="pnum" aria-hidden="true">${a.step}</span>${activityHTML(a, t, band, k2)}</li>`; }
+function pathItem(a, t, band, k2){
+  const done = a.id === 'mastery' && isMastered(band, t.id);                 /* only Mastery is remembered, so only it can show as done */
+  return `<li class="pstep"><span class="pnum${done ? ' done' : ''}" aria-hidden="true">${done ? '✓' : a.step}</span>${activityHTML(a, t, band, k2)}</li>`;
+}
 function renderTopicPage(topicId){
   exploreOn = true;
   const band = exploreBand(); if(!band){ renderGradePicker(true); return; }
@@ -273,6 +286,7 @@ function renderTopicPage(topicId){
       <div class="band">${esc(BANDS[band])}</div>${mastered ? '<div class="mbadge herobadge">✓ Mastered</div>' : ''}
       ${hubSpeakBtn()}
     </div>
+    <p class="pathhint">${k2 ? 'Start with Learn!' : 'A suggested path: Learn, then Quick 10, Challenge 20 and Mastery. Jump in anywhere.'}</p>
     ${learnA.length ? `<h2 class="minor">Learn</h2><ol class="path">${learnA.map(function(a){ return pathItem(a, t, band, k2); }).join('')}</ol>` : ''}
     ${testA.length ? `<h2 class="minor">${k2 ? 'Show what you know' : 'Test yourself'}</h2><ol class="path" start="${testA[0].step}">${testA.map(function(a){ return pathItem(a, t, band, k2); }).join('')}</ol>` : ''}
     ${practice.length ? `<h2 class="minor">${k2 ? 'More games' : 'More ways to practice'}</h2><div class="acts">${practice.map(function(a){ return activityHTML(a, t, band, k2); }).join('')}</div>` : ''}
@@ -345,31 +359,35 @@ function renderExploreResult(){
   let res = null;
   if(Q.kind === 'mastery'){ if(!Q.saved) Q.saved = recordMastery(play.band, play.topic, Q.score, n); res = Q.saved; }
   const txt = exploreResultText(Q, n, res || {});
-  let ask = '', primary = '', secondary = '';
+  let ask = '', primary = '', quiet = '';
+  const hasLearn = learnFor(t.id, play.band).length > 0;
   if(Q.kind === 'quick10'){ ask = k2 ? 'Want a bigger game?' : 'Want a bigger challenge?'; primary = `<button class="btn go" id="nextA" data-next="challenge">Challenge 20</button>`; }
   else if(Q.kind === 'challenge'){ ask = k2 ? 'Ready to master it?' : "Think you've got it?"; primary = `<button class="btn go" id="nextA" data-next="mastery">Try Mastery</button>`; }
-  else if(res.passed){ ask = ''; primary = `<button class="btn go" id="nextA" data-next="subject">Choose Another Topic</button>`; }
-  else { ask = ''; primary = (learnFor(t.id, play.band).length ? `<button class="btn plain" id="reviewA" data-next="learn">Review Learn</button>` : '') + `<button class="btn go" id="nextA" data-next="mastery">Try Mastery Again</button>`; }
-  secondary = `<button class="btn plain" id="again">Play again</button><button class="btn plain" id="home">Back to topic</button>`;
-  view.html = topBar(true) + `<div class="wrap explore"><div class="card center" style="padding:28px 20px">
+  else if(res.passed){ primary = `<button class="btn go" id="nextA" data-next="subject">Choose Another Topic</button>`; }
+  else { primary = `<button class="btn go" id="nextA" data-next="mastery">Try Mastery Again</button>`; }
+  quiet = (Q.kind === 'mastery' && !res.passed && hasLearn ? `<button class="btn plain" id="reviewA" data-next="learn">Review Learn</button>` : '')
+        + (Q.kind !== 'mastery' ? `<button class="btn plain" id="again">Play again</button>` : '')
+        + `<button class="btn plain" id="home">Back to topic</button>`;
+  const cls = Q.kind === 'mastery' && res.passed ? ' mastered' : '';
+  view.html = topBar(true) + `<div class="wrap explore"><div class="card center result${cls}">
     <div class="eyebrow">${esc(quizLabel(Q))} · ${esc(t.name)}</div>
-    <div style="font-size:60px" aria-hidden="true">${txt.icon}</div>
+    <div class="ricon" aria-hidden="true">${txt.icon}</div>
     <h1>${esc(txt.head)}</h1>
     <div class="scoreline" tabindex="-1">${Q.score} of ${n} correct</div>
     <p class="sub" style="margin:8px 0 0">${esc(txt.msg)}</p>
-    ${Q.kind === 'mastery' ? `<p class="sub" style="margin:6px 0 0">${res.passed ? '' : `You need ${masteryNeeded(n)} of ${n} to master this topic. `}${res.record.mastered && !res.passed ? '<span class="mbadge">✓ Mastered</span> from before.' : ''}</p>` : ''}
+    ${Q.kind === 'mastery' ? `<p class="sub" style="margin:6px 0 0">${res.passed ? '<span class="mbadge">✓ Mastered</span>' : `You need ${masteryNeeded(n)} of ${n} to master this topic. ${res.record.mastered ? '<span class="mbadge">✓ Mastered</span> from before.' : ''}`}</p>` : ''}
     ${Q.qs.length < Q.want ? `<p class="sub shortnote">This topic has ${n} different questions for your grade, so this round had ${n}.</p>` : ''}
     ${ask ? `<p class="ask">${esc(ask)}</p>` : ''}
   </div>
-  <div class="row">${primary}</div>
-  <div class="row">${secondary}</div>
-  ${sendBoxHTML('qz', '')}</div>`;
+  <div class="row primaryrow">${primary}</div>
+  <div class="quietrow">${quiet}</div>
+  <details class="emailmore"><summary>Share results with my teacher</summary>${sendBoxHTML('qz', '')}</details></div>`;
   bindGear();
   announce(quizLabel(Q) + ' complete. ' + Q.score + ' of ' + n + ' correct. ' + txt.head + '.');
   const first = document.getElementById('nextA'); if(first) first.focus({ preventScroll:true });
   if(play.speak) speak(txt.head + ' ' + Q.score + ' of ' + n + '. ' + txt.msg);
   app.querySelectorAll('[data-next]').forEach(function(b){ b.onclick = function(){ if(b.dataset.next === 'subject') exploreToSubject(); else chainTo(b.dataset.next); }; });
-  document.getElementById('again').onclick = function(){ go(function(){ startQuiz(Q.opts); }); };
+  const again = document.getElementById('again'); if(again) again.onclick = function(){ go(function(){ startQuiz(Q.opts); }); };
   document.getElementById('home').onclick = function(){ go(renderHub); };
   bindSendBox('qz',
     name => `Bench Boost results: ${name}`,

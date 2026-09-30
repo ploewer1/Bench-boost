@@ -9,12 +9,12 @@ function renderSetup(){
   document.body.className = '';
   const draft = Object.assign({ band:'k2', unit:'rules', rounds:10, speak:true, timer:'normal' }, settings || {});
   let pinErr = '', pinDraft = pin, confirmOut = false;
-  function tile(u){ return `<button class="unit ${draft.unit===u.id?'on':''}" data-unit="${u.id}" aria-pressed="${draft.unit===u.id}"><span class="ic">${u.icon}</span><span>${esc(u.name)}${UNIT_AREA_LABELS[u.id]?`<small class="sol">${UNIT_AREA_LABELS[u.id]}</small>`:''}</span></button>`; }
+  function tile(u){ return `<button class="unit ${draft.unit===u.id?'on':''}" data-unit="${u.id}" aria-pressed="${draft.unit===u.id}"><span class="ic">${u.icon}</span><span>${esc(u.name)}</span></button>`; }
   function paint(){
     const reports = store.get('reports', []);
     view.html = topBar(false) + `<div class="wrap">
-      <h1>Set up the sideline</h1>
-      <p class="sub">Choose a grade band and the unit you're teaching. Each unit lists the Virginia SOL strand or topic it supports.</p>
+      <h1>Teacher setup</h1>
+      <p class="sub">Choose a grade band and the unit you're teaching.</p>
       <div class="card"><h2>Grade band</h2><div class="chips">${
         Object.entries(BANDS).map(([k,v])=>`<button class="chip ${draft.band===k?'on':''}" data-band="${k}" aria-pressed="${draft.band===k}">${v}</button>`).join('')}</div></div>
       <div class="card"><h2>Unit</h2>
