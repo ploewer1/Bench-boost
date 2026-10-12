@@ -294,13 +294,13 @@ const LEARN = (function () {
 
   /* ---- Nutrition & Hydration (unit: nutrition) ---- */
   add('nutrition', 'k2', [
-    ['🍎', 'Five food groups', `MyPlate has five food groups.\nFruit, vegetable, grain, protein, and dairy.`],
+    ['🍎', 'Five food groups', `Schools teach five food groups.\nFruit, vegetable, grain, protein, and dairy.`],
     ['🥦', 'Eat many colors', `Eat fruits and veggies of different colors.\nEach color gives your body something different.`],
     ['💧', 'Water is best', `Water is the best drink when you are thirsty.\nEat breakfast for energy.`],
     ['🥕', 'Healthy snacks', `Carrot sticks and apples are healthy snacks.\nMilk and yogurt help build strong bones.`]
   ]);
   add('nutrition', 'g35', [
-    ['🍽️', 'MyPlate', `About half your plate should be fruits and vegetables. The food groups are fruits, vegetables, grains, protein, and dairy. Beans, eggs, and chicken are in the protein group.`],
+    ['🍽️', 'A balanced plate', `A common healthy-plate guide: about half your plate is fruits and vegetables. The food groups are fruits, vegetables, grains, protein, and dairy. Eggs, chicken, and fish are protein foods.`],
     ['🔋', 'Nutrients that help', `Carbohydrates are the body's main energy source. Protein helps build and repair muscles. Fiber helps digestion, and whole grains like brown rice give you fiber and lasting energy.`],
     ['🥤', 'Drinks matter', `Limit sugary drinks because they have lots of added sugar. Regular soda has the most. Water is the best choice.`],
     ['🍌', 'Fuel for the day', `Breakfast gives you energy to learn on school days. Apple slices with peanut butter make a healthy snack.`]
@@ -500,3 +500,4 @@ function learnFor(topicId, band) {
 }
 
 if (typeof module !== 'undefined' && module.exports) { module.exports = { LEARN, learnFor }; }
+

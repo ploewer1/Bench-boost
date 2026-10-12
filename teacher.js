@@ -8,7 +8,11 @@
 function renderSetup(){
   document.body.className = '';
   const draft = Object.assign({ band:'k2', unit:'rules', rounds:10, speak:true, timer:'normal' }, settings || {});
-  let pinErr = '', pinDraft = pin, confirmOut = false;
+  /* A teacher still on the default PIN (1234) must choose their own before starting student mode. */
+  const WEAK_PINS = ['1234','4321','1212','2580','0123','1004'];
+  const isWeakPin = p => WEAK_PINS.includes(p) || /^(\d)\1{3}$/.test(p);
+  let pinErr = '', pinDraft = isWeakPin(pin) ? '' : pin, confirmOut = false;
+  const mustChangePin = isWeakPin(pin);
   function tile(u){ return `<button class="unit ${draft.unit===u.id?'on':''}" data-unit="${u.id}" aria-pressed="${draft.unit===u.id}"><span class="ic">${u.icon}</span><span>${esc(u.name)}</span></button>`; }
   function paint(){
     const reports = store.get('reports', []);
@@ -34,7 +38,7 @@ function renderSetup(){
         <p class="hint">Applies to Lightning Round. Normal is 60 seconds (90 for K–2). Extended adds 50% more time. Off removes the clock: students answer a set number of questions at their own pace.</p>
         <div class="group">Teacher PIN</div>
         <input class="text pinset" id="pinIn" inputmode="numeric" maxlength="4" value="${esc(pinDraft)}" aria-label="Four-digit teacher PIN">
-        <p class="hint">Students need this PIN to get back to setup.</p>
+        <p class="hint">${mustChangePin ? '<strong>Choose your own PIN before you start.</strong> The starter PIN (1234) is too easy to guess. ' : ''}Students need this PIN to get back to setup. Avoid easy PINs like 1234 or 1111.</p>
         ${pinErr?`<p class="err" role="alert">${pinErr}</p>`:''}
       </div>
       ${accountCardHTML(confirmOut)}
@@ -54,6 +58,7 @@ function renderSetup(){
     function saveDraft(){
       const p = document.getElementById('pinIn').value.trim(); pinDraft = p;
       if(!/^\d{4}$/.test(p)){ pinErr='Enter a 4-digit PIN.'; paint(); return false; }
+      if(isWeakPin(p)){ pinErr='That PIN is too easy to guess. Choose a different 4-digit PIN.'; paint(); return false; }
       pin = p; store.set('pin', pin);
       settings = draft; store.set('settings', settings);
       if(sb && sessionUser) pushSettings(settings, pin).catch(()=>{});
@@ -122,4 +127,5 @@ function renderReports(){
   }
   paint();
 }
+
 
