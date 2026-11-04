@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1B2A4A">
+<meta name="description" content="Interactive K–12 Health and Physical Education learning games, quizzes, challenges, and mastery activities.">
+<meta name="application-name" content="Bench Boost">
+<meta name="apple-mobile-web-app-title" content="Bench Boost">
+<meta name="mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bench Boost">
+<meta property="og:title" content="Bench Boost — K–12 Health &amp; PE Learning Games by Evolution PE">
+<meta property="og:description" content="Interactive K–12 Health and Physical Education learning games, quizzes, challenges, and mastery activities.">
+<title>Bench Boost — K–12 Health &amp; PE Learning Games by Evolution PE</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- Applies a saved Light/Dark choice before the page paints, so there is no flash. "System" (the default) sets nothing. -->
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#app">Skip to main content</a>
+
+<!-- Screen-reader announcements (see js/accessibility.js). Visually hidden. -->
+<div id="live-polite" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="live-assertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<main id="app" tabindex="-1"></main>
+<noscript><p style="padding:24px;font-family:sans-serif">Bench Boost needs JavaScript turned on to run.</p></noscript>
+
+<!-- Everything below is served from this site. No third-party scripts, fonts, or trackers. -->
+<script src="supabase-js-2.117.2.umd.js"></script>
+
+<script src="units.js"></script>
+<script src="topics.js"></script>
+<script src="learn.js"></script>
+<script src="standards.js"></script>
+<script src="questions.js"></script>
+<script src="generators.js"></script>
+
+<script src="storage.js"></script>
+<script src="accessibility.js"></script>
+<script src="mastery.js"></script>
+<script src="theme.js"></script>
+<script src="quiz.js"></script>
+<script src="games.js"></script>
+<script src="teacher.js"></script>
+<script src="learn-screens.js"></script>
+<script src="explore.js"></script>
+<script src="auth.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
