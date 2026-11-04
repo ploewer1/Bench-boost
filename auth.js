@@ -8,10 +8,12 @@
 /* ---------- teacher accounts (Supabase) ---------- */
 const SUPABASE_URL = 'https://otnqmobsvgueiqvgbtcy.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_6pmSCLBXzkrMdl3H518BCg_oJ1ILf7G';
+/* Where the "Ask for more trial time" email goes. Leave it blank to hide that button. */
+const SUPPORT_EMAIL = 'theevolutionpe@gmail.com';
 const DEFAULTS = { band:'k2', unit:'rules', rounds:10, speak:false, pin:'1234' };
 let sb = null, sessionUser = null, account = null, recovering = false;
 
-function authTop(){ return `<div class="top"><div class="brand">${brandMark(false)}</div><span class="toptag">Teacher account</span></div>`; }
+function authTop(){ return `<div class="top"><div class="brand">${brandMark(false)}</div><span class="toptag">Teacher or parent account</span></div>`; }
 function show(html){ stopSpeak(); clearTimers(); document.body.className=''; view.html = html; window.scrollTo(0,0); }
 function field(id,label,type,extra){ return `<label for="${id}" style="font-weight:700;display:block;margin:12px 0 6px">${label}</label><input class="text" id="${id}" type="${type}" ${extra||''}>`; }
 function redirectUrl(){ return /^https?:$/.test(location.protocol) ? location.origin + location.pathname : undefined; }
@@ -103,11 +105,19 @@ function renderLoadError(e){
   document.getElementById('again').onclick=enterApp;
   document.getElementById('out').onclick=doSignOut;
 }
+function trialHelpLink(){
+  if(!SUPPORT_EMAIL) return '';
+  const who = (account && account.email) || '';
+  const body = "Hi! My Bench Boost free trial has ended and I'd like more time.\n\nMy account email: " + who + "\n\nThanks!";
+  return `<a class="btn go" style="text-decoration:none;display:inline-block" href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('More Bench Boost trial time')}&body=${encodeURIComponent(body)}">Ask for more trial time</a>`;
+}
 function renderPaywall(){
+  const help = trialHelpLink();
   show(authTop()+`<div class="wrap" style="max-width:540px"><div class="card center"><div style="font-size:52px">⏰</div><h1>Your free trial has ended</h1>
     <p class="sub">${esc(account && account.email || '')}</p>
     <p>Subscription checkout is being set up. Once it's open, you'll be able to subscribe here and pick up right where you left off.</p>
-    <div class="row"><button class="btn go" id="again">Check again</button><button class="btn plain" id="out">Sign out</button></div></div></div>`);
+    ${help ? '<p>Want to keep going in the meantime? Ask us for more time.</p>' : ''}
+    <div class="row">${help}<button class="btn ${help ? 'plain' : 'go'}" id="again">Check again</button><button class="btn plain" id="out">Sign out</button></div></div></div>`);
   document.getElementById('again').onclick=enterApp;
   document.getElementById('out').onclick=doSignOut;
 }
@@ -123,7 +133,7 @@ function renderAuth(mode, notice){
   const signin = mode==='in';
   show(authTop()+`<div class="wrap" style="max-width:540px">
     <h1>${signin?'Welcome back':'Start your free trial'}</h1>
-    <p class="sub">${signin?'Sign in to open Bench Boost on this device.':'Create a teacher account. Your 14-day trial starts right away.'}</p>
+    <p class="sub">${signin?'Sign in to open Bench Boost on this device.':'Create a teacher or parent account. Your 14-day trial starts right away, with no payment needed. Children never need their own account.'}</p>
     <div class="card">
       <div class="chips"><button class="chip ${signin?'on':''}" data-m="in">Sign in</button><button class="chip ${!signin?'on':''}" data-m="up">Create account</button></div>
       ${notice?`<div class="sendok">${esc(notice)}</div>`:''}

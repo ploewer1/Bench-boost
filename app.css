@@ -116,7 +116,8 @@
   .feedback.good{ background:var(--goodbg); color:var(--goodink); }
   .feedback.bad{ background:var(--badbg); color:var(--badink); }
   .feedback strong{ display:block; font-family:var(--head); font-size:24px; margin-bottom:2px; }
-  .nextrow{ margin-top:14px; }
+  .feedback{ scroll-margin-top:12px; }
+  .nextrow{ margin-top:14px; position:sticky; bottom:0; z-index:4; padding:10px 0 calc(8px + env(safe-area-inset-bottom,0px)); background:var(--card); box-shadow:0 -10px 12px -10px rgba(0,0,0,.18); }
   .band-k2 .qtext{ font-size:36px; }
   .band-k2 .ans{ font-size:27px; min-height:100px; }
 

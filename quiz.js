@@ -100,7 +100,7 @@ function renderQuiz(){
   bindGear();
   const say = document.getElementById('say'); if(say) say.onclick=()=>readQuestion(cur);
   app.querySelectorAll('.ans').forEach(b=>b.onclick=()=>answer(+b.dataset.k));
-  const nx = document.getElementById('next'); if(nx){ nx.onclick=nextQ; nx.focus({preventScroll:true}); }
+  const nx = document.getElementById('next'); if(nx){ nx.onclick=nextQ; nx.focus({preventScroll:true}); try{ const fb = document.querySelector('.feedback'); if(fb) fb.scrollIntoView({block:'start'}); }catch(e){} }
   if(!Q.answered && play.speak && !Q.spoken){ Q.spoken = true; readQuestion(cur); }
 }
 function answer(k){
